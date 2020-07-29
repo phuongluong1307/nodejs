@@ -17,22 +17,18 @@ const ModelSchema = new Schema({
     updated_at: {type: Number, default: Date.now()},
     role_id: {type: Object},
     name_search: {type: String},
-    username_search: {type: String}
+    username_search: {type: String},
+    is_superadmin: {type: Boolean}
 }, {
     toJSON: {virtuals: true}
 });
 
-/** Chỗ này tí mình xài sau giờ mình làm model cho user test trước */
-/*
-ModelSchema.virtual('parent', {
-    ref: 'categories', // The model to use
-    localField: 'parent_id', // Find people where `localField`
-    foreignField: '_id', // is equal to `foreignField`
-    justOne: true
-});
-
-*/
-
+// ModelSchema.virtual('role', {
+//     ref: 'roles', // Tên bảng muốn liên kết
+//     localField: 'role_id', // Khóa liên kết giữa bảng này và bảng ở trên (roles)
+//     foreignField: '_id', // Khóa liên kết ở bảng này (role_id) sẽ tương ứng với khóa nào bên bảng kia (roles)
+//     justOne: true
+// });
 ModelSchema.pre('save', function(next) {
     this.name_search = helper.toSlug(this.name);
     this.username_search = helper.toSlug(this.username);

@@ -6,7 +6,7 @@ var fs = require('fs');
 exports.list = async function (req, res) {
     try {
         let query = {};
-        let limit = req.query.limit ? parseInt(req.query.limit) : 10;
+        let limit = req.query.limit ? parseInt(req.query.limit) : 100;
         let page = req.query.page ? parseInt(req.query.page) : 1;
         let sort_by = req.query.sort_by ? req.query.sort_by : 'created_at';
         let sort_type = req.query.sort_type ? req.query.sort_type : 'desc';
@@ -100,7 +100,7 @@ exports.add = async function (req, res) {
 exports.update = async function (req, res) {
     try {
         let body = req.body;
-        let new_category = await category.findOneAndUpdate({ category_name: body.category }, { category_name: body.category, category: body.category }, { new: true });
+        let new_category = await category.findOneAndUpdate({ category: body.category }, { category_name: body.category, category: body.category }, { new: true });
         let new_product = {
             product_name: body.hasOwnProperty('product_name') ? body.product_name : '',
             product_SKU: body.hasOwnProperty('product_SKU') ? body.product_SKU : '',

@@ -4,7 +4,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 const mongoose = require("mongoose");
 const server = http.createServer(app);
-const {permission} = require('./models/PermissionsModel');
+const { role } = require('./models/RoleModel');
 
 /** Chỗ này là middleware trước khi đưa vào route mình sẽ parse sẵn dữ liệu json thành các biến để sau này không phải parse nữa 
  * express.json({limit: '50mb'})
@@ -59,12 +59,13 @@ let verifyToken = require('./middlewares/verifyToken');
 var arr_route_private = {
     user: 'users',
     role: 'roles',
-    permission: 'permissions',
     page: 'pages',
     product: 'products',
     category: 'product-categories',
     album: 'product-album',
-    avatar: 'avatar-user'
+    avatar: 'avatar-user',
+    customer: 'customers',
+    invoice: 'invoices'
 };
 for (key in arr_route_private) {
     var route_file = require('./routes/' + key + '.js');
@@ -87,7 +88,7 @@ app.use('/reload-permission', async function(req, res){
                 method: routes[i],
                 route: '/api/' + arr_route_private[key]
             });
-        } 
+        };
     };
     res.json({
         data: arr_permission,

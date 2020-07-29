@@ -30,14 +30,15 @@ exports.login = async function (req, res) {
                     message: 'Login success !',
                     default_url: finduser.default_url,
                     token: token,
-                    username: finduser.username
+                    name: finduser.name
                 });
             } else {
                 const salt = await bcrypt.genSalt(10);
                 const hashPassword = await bcrypt.hash('123123', salt);
                 return res.json({
                     error: true,
-                    message: 'User or Password invalid !'
+                    message: 'User or Password invalid !',
+                    pwd: hashPassword
                 });
             }
         });
@@ -153,6 +154,7 @@ exports.resetPassword = function(req, res){
                 
                 const salt = await bcrypt.genSalt(10);
                 const hashPassword = await bcrypt.hash(newPass, salt);
+                
                 const new_password = {
                     password: hashPassword,
                     forget_token: ''

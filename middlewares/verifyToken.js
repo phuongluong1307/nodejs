@@ -1,15 +1,31 @@
 const jwt = require('jsonwebtoken');
 const config = require('../configs/overview');
-module.exports = function(req,res,next){
+const {user} = require('../models/UserModel');
+const {role} = require('../models/RoleModel');
+const { static } = require('express');
+module.exports = async function(req,res,next){
     try{
         var headerToken = req.headers['auth-token'];
         var token = headerToken || headerToken.split(' ')[1];
-        // Theo tài liệu thì hàm này trả về key auth-token trong header mà sao nó ko ra mà nó chết luôn ở đây  ; tạm thời để đây mai cậu hiếu coi 
         if(!token) return res.status(401).send('Access Denied');
-        jwt.verify(token, config.secret_token,function(err, decoded){
+        jwt.verify(token, config.secret_token,async function(err, decoded){
             if(err) return res.status(403);
-            req.user = decoded;
-            next();
+            let current_user = await user.findOne({_id: decoded.id});
+            let allow = false;
+            if(current_user){
+                let role_data = await role.findOne(current_user.role_id);
+                if(role_data){
+                    let method_url = req.method.toLowerCase() + ":" + req.baseUrl;
+                    let permission = role_data.permissions;
+                    if(permission.indexOf(method_url)>-1){
+                        allow = true;
+                    };
+                };
+                if(current_user.is_superadmin) allow = true;
+            };
+            if(allow) next();
+            else res.status(403).send({message: 'Truy cập bị từ chối'})
+            // next();
         });
     }catch(err){
         res.json({

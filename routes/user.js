@@ -7,11 +7,6 @@ router.get('/', function(req, res){
     return  controller.list(req, res);
 });
 
-/** Get data by id */
-router.get('/:id', function(req, res){
-    return  controller.single(req, res);
-});
-
 /** Insert data */
 router.post('/', function(req, res){
     return  controller.add(req, res);

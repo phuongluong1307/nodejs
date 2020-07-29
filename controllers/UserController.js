@@ -48,32 +48,6 @@ exports.list = async function (req, res) {
     }
 };
 
-exports.single = async function (req, res) {
-    try {
-        let id = req.params.id;
-        let single_user = await user.findOne({ _id: id }, function (err, doc) {
-            if (err) {
-                res.json({
-                    error: true,
-                    message: err
-                })
-            } else {
-                res.json({
-                    error: false,
-                    message: 'Get user success!',
-                    data: doc
-                })
-            }
-        });
-        return single_user;
-    } catch{
-        res.json({
-            error: true,
-            message: 'Get user fail!'
-        })
-    }
-}
-
 // chỗ mà nãy mình bỏ vô nó sẽ tự parse dữ liệu thành các biến bỏ vô thằng req.body 
 // sau này mính chỉ cần nhận dữ liệu giao thức POST thông qua thằng body
 // còn dữ liệu giao thức GET thì mình nhận dữ liệu thông qua biến req.query
@@ -94,7 +68,7 @@ exports.add = async function (req, res) {
             default_url: default_url ? default_url.url : '',
             forget_token: '',
             token_exprired: '',
-            role_id: role_id
+            role_id: role_id._id,
         };
         const salt = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(new_record.password, salt);
