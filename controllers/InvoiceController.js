@@ -98,7 +98,7 @@ exports.add = async function(req,res){
             res.json({
                 error: false,
                 message: 'Add invoice success',
-                data: list_product
+                data: body.products
             })
         }
     }catch(err){

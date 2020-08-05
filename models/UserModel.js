@@ -10,6 +10,7 @@ const ModelSchema = new Schema({
     password: {type: String},
     name: {type: String},
     email: {type: String},
+    list_branch: {type:Array},
     forget_token: {type: String},
     token_exprired: {type: String},
     default_url: {type: String},

@@ -8,6 +8,7 @@ const ModelSchema = new Schema({
     code_bill: {type: String},
     date: {type: String},
     customer_id: {type: String},
+    branch_id: {type:String},
     seller_id: {type: String},
     total_price: {type: Number},
     discount_price: {type: Number}, // 100,000 | 100,000 

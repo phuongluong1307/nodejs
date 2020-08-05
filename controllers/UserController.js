@@ -68,6 +68,7 @@ exports.add = async function (req, res) {
             forget_token: '',
             token_exprired: '',
             role_id: role_id._id,
+            list_branch: req.body.hasOwnProperty('list_branch') ? req.body.list_branch : '',
         };
         const salt = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(new_record.password, salt);
