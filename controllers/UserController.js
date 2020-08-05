@@ -39,7 +39,6 @@ exports.list = async function (req, res) {
                 options: options,
             })
         });
-
     } catch{
         res.json({
             error: true,

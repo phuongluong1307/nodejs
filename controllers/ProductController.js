@@ -39,7 +39,7 @@ exports.list = async function (req, res) {
 exports.add = async function (req, res) {
     try {
         let body = req.body;
-        let new_category = await category.findOne({ category_name: body.category });
+        let new_category = await category.findOne({ category: body.category });
         let thumbnail = body.hasOwnProperty('thumbnail') ? body.thumbnail : '';
         let file_name = ((new Date()).getTime() + "-" + (new Date()).getDate() + "-" + (new Date().getMonth() + 1))+".jpg";
         let month = `${(new Date().getMonth() + 1) + "-" + (new Date().getFullYear())}`;
@@ -48,8 +48,8 @@ exports.add = async function (req, res) {
         })
         let dirname = month ? month : addMonth;
         let Path = path.format({
-            root: "C:\Users\ADMINS\Desktop\nodejs",
-            dir: `upload/${dirname}`,
+            root: "",
+            dir: `./upload/${dirname}`,
             base: file_name,
         });
         let ext = thumbnail.replace("data:image/", "");
@@ -63,10 +63,11 @@ exports.add = async function (req, res) {
                 console.log(err);
             });
         };
+        let pathImage = '/upload/'+dirname
         let new_product = {
             product_name: body.hasOwnProperty('product_name') ? body.product_name : '',
             product_SKU: body.hasOwnProperty('product_SKU') ? body.product_SKU : '',
-            thumbnail: isBase64Valid ? '/'+file_name : thumbnail,
+            thumbnail: isBase64Valid ? pathImage+'/'+file_name : '',
             price: body.hasOwnProperty('price') ? parseInt(body.price) : '',
             category: new_category ? new_category.category_name : ''
         };

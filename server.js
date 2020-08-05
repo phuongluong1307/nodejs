@@ -65,7 +65,8 @@ var arr_route_private = {
     album: 'product-album',
     avatar: 'avatar-user',
     customer: 'customers',
-    invoice: 'invoices'
+    invoice: 'invoices',
+    invoiceDetail: 'invoice-detail'
 };
 for (key in arr_route_private) {
     var route_file = require('./routes/' + key + '.js');
