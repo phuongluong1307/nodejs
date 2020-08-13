@@ -63,7 +63,7 @@ exports.add = async function (req, res) {
                 console.log(err);
             });
         };
-        let pathImage = '/upload/'+dirname
+        let pathImage = "/" + dirname;
         let new_product = {
             product_name: body.hasOwnProperty('product_name') ? body.product_name : '',
             product_SKU: body.hasOwnProperty('product_SKU') ? body.product_SKU : '',
@@ -102,10 +102,34 @@ exports.update = async function (req, res) {
     try {
         let body = req.body;
         let new_category = await category.findOneAndUpdate({ category: body.category }, { category_name: body.category, category: body.category }, { new: true });
+        let thumbnail = body.hasOwnProperty('thumbnail') ? body.thumbnail : '';
+        let file_name = ((new Date()).getTime() + "-" + (new Date()).getDate() + "-" + (new Date().getMonth() + 1))+".jpg";
+        let month = `${(new Date().getMonth() + 1) + "-" + (new Date().getFullYear())}`;
+        let addMonth = await fs.mkdir(`./upload/${month}`, { recursive: true }, function(err){
+            console.log(err)
+        })
+        let dirname = month ? month : addMonth;
+        let Path = path.format({
+            root: "",
+            dir: `./upload/${dirname}`,
+            base: file_name,
+        });
+        let ext = thumbnail.replace("data:image/", "");
+        ext = ext.split(";base64");
+        var base64Rejex = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
+        var isBase64Valid = base64Rejex.test(thumbnail); 
+        var regex = new RegExp(`^data:image\/${ext[0]};base64,`);
+        if(isBase64Valid){
+            thumbnail = thumbnail.replace(regex, "");
+            fs.writeFile(Path, thumbnail, 'base64', function(err) {
+                console.log(err);
+            });
+        };
+        let pathImage = "/" + dirname;
         let new_product = {
             product_name: body.hasOwnProperty('product_name') ? body.product_name : '',
             product_SKU: body.hasOwnProperty('product_SKU') ? body.product_SKU : '',
-            thumbnail: body.hasOwnProperty('thumbnail') ? body.thumbnail : '',
+            thumbnail: isBase64Valid ? pathImage+'/'+file_name : '',
             price: body.hasOwnProperty('price') ? parseInt(body.price) : '',
             category: new_category ? new_category.category_name : '',
             default_url: body.hasOwnProperty('product_name') ? body.default_url : '',

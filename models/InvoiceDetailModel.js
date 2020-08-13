@@ -1,5 +1,5 @@
 const mongoose= require('mongoose');
-var collection_name = "invoice-detail";
+var collection_name = "invoice_detail";
 
 const Schema = mongoose.Schema;
 
@@ -7,6 +7,8 @@ const ModelSchema = new Schema({
     invoice_id: {type: String},
     customer_id: {type:String},
     product_id: {type: String},
+    product_name: {type: String},
+    image: {type: String},
     quantity: {type: Number},
     price: {type:Number},
     discount_price: {type:Number},

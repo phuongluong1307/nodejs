@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const helper = require('../libs/helper');
-var collection_name = "branchs";
+var collection_name = "branches";
 const Schema = mongoose.Schema;
 
 const ModelSchema = new Schema({

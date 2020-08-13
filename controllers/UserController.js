@@ -47,6 +47,25 @@ exports.list = async function (req, res) {
     }
 };
 
+exports.lone = async function(req,res){
+    try{
+        let id = req.params.id;
+        let findUser = await user.findOne({_id: id});
+        if(findUser){
+            res.json({
+                error: false,
+                message: "Retrieving user by id success",
+                data: findUser
+            })
+        }
+    }catch(err){
+        res.json({
+            error: true,
+            message: "Retrieving user by id failed"
+        })
+    }
+}
+
 // chỗ mà nãy mình bỏ vô nó sẽ tự parse dữ liệu thành các biến bỏ vô thằng req.body 
 // sau này mính chỉ cần nhận dữ liệu giao thức POST thông qua thằng body
 // còn dữ liệu giao thức GET thì mình nhận dữ liệu thông qua biến req.query

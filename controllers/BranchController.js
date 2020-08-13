@@ -1,15 +1,16 @@
 const { branch } = require('../models/BranchModel');
+const { user } = require('../models/UserModel');
 
 exports.list = async function(req,res){
     try{
-        let list_branch = await branch.find({});
-        if(list_branch){
+        let listBranch = await branch.find({});
+        if(listBranch){
             res.json({
                 error: false,
-                message: "Get list branch success!",
-                data: list_branch
+                message: "Get list branch success",
+                data: listBranch
             })
-        }
+        };
     }catch(err){
         res.json({
             error: true,

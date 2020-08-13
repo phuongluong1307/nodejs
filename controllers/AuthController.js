@@ -30,7 +30,9 @@ exports.login = async function (req, res) {
                     message: 'Login success !',
                     default_url: finduser.default_url,
                     token: token,
-                    name: finduser.name
+                    name: finduser.name,
+                    username: finduser.username,
+                    id: finduser._id
                 });
             } else {
                 const salt = await bcrypt.genSalt(10);

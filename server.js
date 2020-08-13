@@ -5,11 +5,13 @@ const port = process.env.PORT || 3000;
 const mongoose = require("mongoose");
 const server = http.createServer(app);
 const { role } = require('./models/RoleModel');
+const fs = require('fs');
 
 /** Chỗ này là middleware trước khi đưa vào route mình sẽ parse sẵn dữ liệu json thành các biến để sau này không phải parse nữa 
  * express.json({limit: '50mb'})
 */
 app.use(express.json({ limit: '50mb' }));
+app.use(express.static('upload'));
 
 /** Allow cors */
 app.use(function (req, res, next) {

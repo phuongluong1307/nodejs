@@ -1,4 +1,7 @@
 const { customer } = require('../models/CustomerModel');
+const { user } = require('../models/UserModel');
+const { invoiceDetail } = require('../models/InvoiceDetailModel');
+const { product } = require('../models/ProductModel');
 const helper = require('../libs/helper');
 
 exports.list = async function(req,res){
@@ -38,6 +41,32 @@ exports.list = async function(req,res){
         })
     }
 };
+
+exports.lone = async function(req,res){
+    try{
+        let query = req.query;
+        let id = req.params.id;
+        let seller_id = query.hasOwnProperty('seller_id') ? query.seller_id : '';
+        let invoice_id = query.hasOwnProperty('invoice_id') ? query.invoice_id : '';
+        let findInvoiceDetail = await invoiceDetail.find({invoice_id: invoice_id});
+        let findSeller = await user.findOne({_id: seller_id});
+        let findCustomer = await customer.findOne({_id: id});
+        if(findCustomer){
+            res.json({
+                error: false,
+                message: "Retrieving user by id success",
+                data: findCustomer,
+                name: findSeller.name,
+                invoice_detail: findInvoiceDetail,
+            })
+        }
+    }catch(err){
+        res.json({
+            error: true,
+            message: "Retrieving user by id failed!"
+        })
+    }
+}
 
 exports.add = async function(req,res){
     try{

@@ -10,6 +10,9 @@ const ModelSchema = new Schema({
     customer_id: {type: String},
     branch_id: {type:String},
     seller_id: {type: String},
+    tax_value: {type: Number},
+    tax_price: {type: Number},
+    subtotal: {type: Number},
     total_price: {type: Number},
     discount_price: {type: Number}, // 100,000 | 100,000 
     discount_value: {type: Number}, // 10 | 100,000 

@@ -1,3 +1,7 @@
+const { invoiceDetail } = require('../models/InvoiceDetailModel');
+const { customer } = require('../models/CustomerModel');
+const { user } = require('../models/UserModel');
+
 exports.list = async function(req,res){
     try{
 
@@ -7,6 +11,35 @@ exports.list = async function(req,res){
             message: "Get list invoice-detail success"
         })
     }
+};
+
+exports.lone = async function(req,res){
+    // try{
+        let query = req.query;
+        let id = req.params.id;
+        let seller_id = query.hasOwnProperty('seller_id') ? query.seller_id : '';
+        let customer_id = query.hasOwnProperty('customer_id') ? query.customer_id : '';
+        let findInvoiceDetail = await invoiceDetail.find({invoice_id: id});
+        let findSeller = await user.findOne({_id: seller_id});
+        let findCustomer = null;
+        if(customer_id != ""){
+            findCustomer = await customer.findOne({_id: customer_id});
+        };
+        if(findInvoiceDetail){
+            res.json({
+                error: false,
+                message: "Retrieving user by id success",
+                data: findCustomer ? findCustomer : null,
+                name: findSeller.name,
+                invoice_detail: findInvoiceDetail,
+            })
+        }
+    // }catch(err){
+    //     res.json({
+    //         error: true,
+    //         message: "Get list invoice-detail failing"
+    //     })
+    // }
 };
 
 exports.add = async function(req,res){
