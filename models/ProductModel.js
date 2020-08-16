@@ -5,6 +5,7 @@ var collection_name = "products";
 var helper = require('../libs/helper');
 
 const ModelSchema = new Schema({
+    barcode_id: {type: String},
     product_name: {type: String},
     product_SKU: {type: String},
     thumbnail: {type: String},

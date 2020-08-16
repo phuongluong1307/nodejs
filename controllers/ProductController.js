@@ -1,8 +1,10 @@
 const { product } = require('../models/ProductModel');
 const { category } = require('../models/CategoryModel');
 const helper = require('../libs/helper');
+const base64 = require('../libs/base64');
 var path = require('path');
 var fs = require('fs');
+const request = require('request')
 exports.list = async function (req, res) {
     try {
         let query = {};
@@ -41,35 +43,89 @@ exports.add = async function (req, res) {
         let body = req.body;
         let new_category = await category.findOne({ category: body.category });
         let thumbnail = body.hasOwnProperty('thumbnail') ? body.thumbnail : '';
-        let file_name = ((new Date()).getTime() + "-" + (new Date()).getDate() + "-" + (new Date().getMonth() + 1))+".jpg";
-        let month = `${(new Date().getMonth() + 1) + "-" + (new Date().getFullYear())}`;
-        let addMonth = await fs.mkdir(`./upload/${month}`, { recursive: true }, function(err){
-            console.log(err)
-        })
-        let dirname = month ? month : addMonth;
-        let Path = path.format({
-            root: "",
-            dir: `./upload/${dirname}`,
-            base: file_name,
-        });
-        let ext = thumbnail.replace("data:image/", "");
-        ext = ext.split(";base64");
-        var base64Rejex = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
-        var isBase64Valid = base64Rejex.test(thumbnail); 
-        var regex = new RegExp(`^data:image\/${ext[0]};base64,`);
-        if(isBase64Valid){
-            thumbnail = thumbnail.replace(regex, "");
-            fs.writeFile(Path, thumbnail, 'base64', function(err) {
-                console.log(err);
-            });
-        };
-        let pathImage = "/" + dirname;
         let new_product = {
+            barcode_id: body.hasOwnProperty('barcode_id') ? body.barcode_id : '',
             product_name: body.hasOwnProperty('product_name') ? body.product_name : '',
             product_SKU: body.hasOwnProperty('product_SKU') ? body.product_SKU : '',
-            thumbnail: isBase64Valid ? pathImage+'/'+file_name : '',
+            thumbnail: thumbnail ? await base64.base64(thumbnail) : '',
             price: body.hasOwnProperty('price') ? parseInt(body.price) : '',
             category: new_category ? new_category.category_name : ''
+        };
+        let data = req.body.data ? req.body.data : '';
+        var arr_product_excel = [];
+        let list_product = await product.find({});
+        var arr_success = [];
+        if(data!=''){
+            
+            let month = `${(new Date().getMonth() + 1) + "-" + (new Date().getFullYear())}`;
+            let addMonth = await fs.mkdir(`./upload/${month}`, { recursive: true }, function(err){
+                console.log(err)
+            })
+
+            data.forEach(async (item) => {
+                let check_dupli = list_product.findIndex(row => row.product_name === item.product_name);
+                let add_product = {
+                    product_name: "",
+                    product_SKU: "",
+                    thumbnail: "",
+                    price: "",
+                    category: "",
+                    option: ""
+                };
+
+                let file_name = (Math.floor(Math.random() * (new Date()).getMilliseconds()) + "-" + (new Date()).getDate() + "-" + (new Date().getMonth() + 1))+".jpg";
+
+                let dirname = month ? month : addMonth;
+                let Path = path.format({
+                    root: "",
+                    dir: `./upload/${dirname}`,
+                    base: file_name,
+                });
+                const download = (url, path, callback) => {
+                    request.head(url, (err, res, body) => {
+                        request(url)
+                        .pipe(fs.createWriteStream(path))
+                        .on('close', callback)
+                    })
+                };
+
+                const url = item.thumbnail;
+                const urlImage = Path;
+                
+                let pathImage = "/" + dirname +'/' + file_name;
+                if(check_dupli > -1){
+                    add_product = {
+                        product_name: item.product_name,
+                        product_SKU: item.product_SKU,
+                        thumbnail: pathImage,
+                        price: item.price,
+                        category: item.category,
+                        option: "Thêm thất bại"
+                    };
+                }else{
+                    download(url, urlImage, () => {
+                        console.log('done')
+                    });
+                    add_product = {
+                        product_name: item.product_name,
+                        product_SKU: item.product_SKU,
+                        thumbnail: pathImage,
+                        price: item.price,
+                        category: item.category,
+                        option: "Thêm thành công"
+                    };
+                    arr_success.push(add_product)
+                }
+                arr_product_excel.push(add_product);
+            });
+        };
+        if(arr_product_excel.length > 0){
+            await product.insertMany(arr_success);
+            return res.json({
+                error: false,
+                message: "Add file success!",
+                data: arr_product_excel
+            });
         };
         let check_empty = [new_product.product_name, new_product.product_SKU, new_product.thumbnail, new_product.price].indexOf('');
         if (check_empty > -1) {
