@@ -31,6 +31,8 @@ ModelSchema.virtual('parent', {
 
 ModelSchema.pre('save', function(next) {
     this.product_name_search = helper.toSlug(this.product_name);
+    this.barcode_id = this.barcode_id.split(' ').join('');
+    this.barcode_id = helper.toSlug(this.barcode_id);
     next();
 });
 

@@ -13,8 +13,14 @@ exports.list = async function (req, res) {
         let sort_by = req.query.sort_by ? req.query.sort_by : 'created_at';
         let sort_type = req.query.sort_type ? req.query.sort_type : 'desc';
         let keyword = req.query.keyword ? helper.toSlug(req.query.keyword) : '';
+        let barcode_id = req.query.barcode_id ? req.query.barcode_id : '';
         if(keyword != ''){
             query.product_name_search = {$regex: '.*'+keyword+'.*'};
+        };
+        if(barcode_id!=''){
+            barcode_id = barcode_id.split(' ').join('');
+            barcode_id = helper.toSlug(barcode_id);
+            query.barcode_id = barcode_id;
         }
         let sort = {};
         sort[sort_by] = sort_type;
@@ -23,11 +29,13 @@ exports.list = async function (req, res) {
             limit: limit,
             sort: sort
         };
+        
         product.paginate(query, options).then(function(result){
             res.json({
                 error: false,
                 message: 'Get list product success!',
-                data: result
+                data: result,
+                query: query
             })
         });
     } catch (err) {
@@ -182,7 +190,11 @@ exports.update = async function (req, res) {
             });
         };
         let pathImage = "/" + dirname;
+        let barcode_id = body.hasOwnProperty('barcode_id') ? body.barcode_id : '';
+        barcode_id = barcode_id.split(' ').join('');
+        barcode_id = helper.toSlug(barcode_id);
         let new_product = {
+            barcode_id: barcode_id,
             product_name: body.hasOwnProperty('product_name') ? body.product_name : '',
             product_SKU: body.hasOwnProperty('product_SKU') ? body.product_SKU : '',
             thumbnail: isBase64Valid ? pathImage+'/'+file_name : '',
