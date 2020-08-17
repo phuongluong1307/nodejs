@@ -71,7 +71,7 @@ exports.add = async function (req, res) {
             })
 
             data.forEach(async (item) => {
-                let check_dupli = list_product.findIndex(row => row.product_name === item.product_name);
+                let check_dupli = list_product.findIndex(row => row.product_name === item.TênSP);
                 let add_product = {
                     product_name: "",
                     product_SKU: "",
@@ -97,17 +97,17 @@ exports.add = async function (req, res) {
                     })
                 };
 
-                const url = item.thumbnail;
+                const url = item.HìnhẢnh;
                 const urlImage = Path;
                 
                 let pathImage = "/" + dirname +'/' + file_name;
                 if(check_dupli > -1){
                     add_product = {
-                        product_name: item.product_name,
-                        product_SKU: item.product_SKU,
+                        product_name: item.TênSP,
+                        product_SKU: item.MãSP,
                         thumbnail: pathImage,
-                        price: item.price,
-                        category: item.category,
+                        price: item.Giá,
+                        category: item.LoạiSP,
                         option: "Thêm thất bại"
                     };
                 }else{
@@ -115,11 +115,11 @@ exports.add = async function (req, res) {
                         console.log('done')
                     });
                     add_product = {
-                        product_name: item.product_name,
-                        product_SKU: item.product_SKU,
+                        product_name: item.TênSP,
+                        product_SKU: item.MãSP,
                         thumbnail: pathImage,
-                        price: item.price,
-                        category: item.category,
+                        price: item.Giá,
+                        category: item.LoạiSP,
                         option: "Thêm thành công"
                     };
                     arr_success.push(add_product)
@@ -167,29 +167,8 @@ exports.update = async function (req, res) {
         let body = req.body;
         let new_category = await category.findOneAndUpdate({ category: body.category }, { category_name: body.category, category: body.category }, { new: true });
         let thumbnail = body.hasOwnProperty('thumbnail') ? body.thumbnail : '';
-        let file_name = ((new Date()).getTime() + "-" + (new Date()).getDate() + "-" + (new Date().getMonth() + 1))+".jpg";
-        let month = `${(new Date().getMonth() + 1) + "-" + (new Date().getFullYear())}`;
-        let addMonth = await fs.mkdir(`./upload/${month}`, { recursive: true }, function(err){
-            console.log(err)
-        })
-        let dirname = month ? month : addMonth;
-        let Path = path.format({
-            root: "",
-            dir: `./upload/${dirname}`,
-            base: file_name,
-        });
-        let ext = thumbnail.replace("data:image/", "");
-        ext = ext.split(";base64");
-        var base64Rejex = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
-        var isBase64Valid = base64Rejex.test(thumbnail); 
-        var regex = new RegExp(`^data:image\/${ext[0]};base64,`);
-        if(isBase64Valid){
-            thumbnail = thumbnail.replace(regex, "");
-            fs.writeFile(Path, thumbnail, 'base64', function(err) {
-                console.log(err);
-            });
-        };
-        let pathImage = "/" + dirname;
+        let findImage = await product.findOne({thumbnail: thumbnail});
+        console.log(findImage)
         let barcode_id = body.hasOwnProperty('barcode_id') ? body.barcode_id : '';
         barcode_id = barcode_id.split(' ').join('');
         barcode_id = helper.toSlug(barcode_id);
@@ -197,7 +176,7 @@ exports.update = async function (req, res) {
             barcode_id: barcode_id,
             product_name: body.hasOwnProperty('product_name') ? body.product_name : '',
             product_SKU: body.hasOwnProperty('product_SKU') ? body.product_SKU : '',
-            thumbnail: isBase64Valid ? pathImage+'/'+file_name : '',
+            thumbnail: findImage ? thumbnail : await base64.base64(thumbnail),
             price: body.hasOwnProperty('price') ? parseInt(body.price) : '',
             category: new_category ? new_category.category_name : '',
             default_url: body.hasOwnProperty('product_name') ? body.default_url : '',
