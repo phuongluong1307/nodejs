@@ -6,6 +6,10 @@ router.get('/', function(req,res){
     return controller.list(req,res);
 });
 
+router.get('/:id', function(req,res){
+    return controller.lone(req,res);
+});
+
 router.post('/', function(req,res){
     return controller.add(req,res)
 });

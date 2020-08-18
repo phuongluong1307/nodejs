@@ -64,6 +64,38 @@ exports.list = async function(req,res){
     // }
 };
 
+exports.lone = async function(req,res){
+    // try{
+        let query = req.query;
+        let id = req.params.id;
+        let seller_id = query.hasOwnProperty('seller_id') ? query.seller_id : '';
+        let customer_id = query.hasOwnProperty('customer_id') ? query.customer_id : '';
+        let findInvoiceDetail = await invoiceDetail.find({invoice_id: id});
+        let findSeller = null;
+        if(seller_id!=''){
+            findSeller = await user.findOne({_id: seller_id});
+        };
+        let findCustomer = null;
+        if(customer_id != ""){
+            findCustomer = await customer.findOne({_id: customer_id});
+        };
+        if(findInvoiceDetail){
+            res.json({
+                error: false,
+                message: "Retrieving user by id success",
+                data: findCustomer ? findCustomer : null,
+                name: findSeller ? findSeller.name : null,
+                invoice_detail: findInvoiceDetail,
+            })
+        }
+    // }catch(err){
+    //     res.json({
+    //         error: true,
+    //         message: "Retrieving invoice by id failed "
+    //     })
+    // }
+}
+
 exports.add = async function(req,res){
     try{
         let body = req.body;
