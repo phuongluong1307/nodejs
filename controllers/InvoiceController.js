@@ -45,6 +45,7 @@ exports.list = async function(req,res){
             sort: sort,
             limit: limit,
             page: page,
+            populate: 'customer'
         };
 
         invoice.paginate(query, options).then(function (result) {
@@ -97,27 +98,28 @@ exports.lone = async function(req,res){
 }
 
 exports.add = async function(req,res){
-    try{
+    // try{
         let body = req.body;
-        let name_customer = body.hasOwnProperty('customer') ? body.customer : '';
-        let customer_id = await customer.findOne({name: name_customer});
-        let seller = await user.findOne({name: body.seller});
-        let new_date = new Date();
-        let number = 1;
-        let code_bill = "HD" + new_date.getDate() + (new_date.getMonth() + 1) + new_date.getFullYear();
-        let bill = await invoice.find({date: (new Date()).toLocaleDateString()});
-        if(bill.length != 0){
-            let last_number = bill[bill.length - 1].code_bill.replace(code_bill, "");
-            if(last_number){
-                number = Number(last_number) + 1;
+        let customer_id = body.hasOwnProperty('customer_id') ? body.customer_id : '';
+        if(customer_id==''){
+            let new_record = {
+                name: "Khách lẻ",
+                phone_number: "",
+                email: "",
+            };
+            let findCustomer = await customer.findOne({name: new_record.name});
+            if(!findCustomer){
+                let add_new_customer = await (new customer(new_record)).save();
+                customer_id = add_new_customer._id;
+            }else{
+                customer_id = findCustomer._id;
             }
         };
-        code_bill = "HD" + new_date.getDate() + (new_date.getMonth() + 1) + new_date.getFullYear() + number;
-        let nameBranch = await branch.findOne({name: body.nameBranch});
+        let seller = await user.findOne({name: body.seller});
+        let branch_id = body.branch_id ? body.branch_id : '';
         let new_invoice = {
-            code_bill: code_bill,
             date: (new Date()).toLocaleDateString(),
-            customer_id: customer_id ? customer_id._id : "",
+            customer_id: customer_id,
             seller_id: seller ? seller._id : '',
             tax_type: body.hasOwnProperty('tax_type') ? body.tax_type : '',
             tax_value: body.hasOwnProperty('tax_value') ? body.tax_value : 0,
@@ -127,7 +129,7 @@ exports.add = async function(req,res){
             discount_price: body.hasOwnProperty('discount_price') ? body.discount_price : 0,
             discount_value: body.hasOwnProperty('discount_value') ? body.discount_value : 0,
             discount_type: body.hasOwnProperty('discount_type') ? body.discount_type : '',
-            branch_id: nameBranch ? nameBranch._id : '',
+            branch_id: branch_id
         };
         let add_invoice = await new invoice(new_invoice).save();
         let arr_product_bill = [];
@@ -162,12 +164,12 @@ exports.add = async function(req,res){
                 invoice: add_invoice,
             })
         }
-    }catch(err){
-        res.json({
-            error: true,
-            message: 'Add invoice failing'
-        })
-    }
+    // }catch(err){
+    //     res.json({
+    //         error: true,
+    //         message: 'Add invoice failing'
+    //     })
+    // }
 };
 
 exports.update = async function(req,res){

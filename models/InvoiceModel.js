@@ -19,6 +19,39 @@ const ModelSchema = new Schema({
     discount_type: {type: String}, // percent | money 
     created_at: {type: Number, default: Date.now()},
     updated_at: {type: Number, default: Date.now()}
+}, {
+    toJSON: {virtuals: true}
+});
+
+ModelSchema.pre('save', async function(next) {
+    const { invoice } = require('./InvoiceModel');
+    let new_date = new Date();
+    let number = 1;
+    let code_bill = "HD" + new_date.getDate() + (new_date.getMonth() + 1) + new_date.getFullYear();
+    let bill = await invoice.find({date: (new Date()).toLocaleDateString()});
+    if(bill.length != 0){
+        let last_number = bill[bill.length - 1].code_bill.replace(code_bill, "");
+        if(last_number){
+            number = Number(last_number) + 1;
+        }
+    };
+    code_bill = "HD" + new_date.getDate() + (new_date.getMonth() + 1) + new_date.getFullYear() + number;
+    this.code_bill = code_bill;
+    next();
+});
+
+ModelSchema.virtual('seller', {
+    ref: 'users', // The model to use
+    localField: 'seller_id', // Find people where `localField`
+    foreignField: '_id', // is equal to `foreignField`
+    justOne: true
+});
+
+ModelSchema.virtual('customer', {
+    ref: 'customers', // The model to use
+    localField: 'customer_id', // Find people where `localField`
+    foreignField: '_id', // is equal to `foreignField`
+    justOne: true
 });
 
 ModelSchema.plugin(mongoosePaginate);

@@ -3,6 +3,7 @@ const config = require('../configs/overview');
 var bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const nodemailer = require("nodemailer");
+const { branch } = require('../models/BranchModel');
 
 exports.login = async function (req, res) {
     try {
@@ -25,6 +26,11 @@ exports.login = async function (req, res) {
                     name: finduser.name,
                     username: finduser.username
                 }, config.secret_token);
+                let listBranch = await branch.find({
+                    _id: {
+                        $in: typeof finduser.list_branch == "array" || typeof finduser.list_branch == "object" ? finduser.list_branch : []
+                    }
+                });
                 return res.json({
                     error: false,
                     message: 'Login success !',
@@ -32,7 +38,9 @@ exports.login = async function (req, res) {
                     token: token,
                     name: finduser.name,
                     username: finduser.username,
-                    id: finduser._id
+                    id: finduser._id,
+                    listBranch: listBranch,
+                    test: typeof finduser.list_branch
                 });
             } else {
                 const salt = await bcrypt.genSalt(10);
