@@ -40,7 +40,6 @@ exports.login = async function (req, res) {
                     username: finduser.username,
                     id: finduser._id,
                     listBranch: listBranch,
-                    test: typeof finduser.list_branch
                 });
             } else {
                 const salt = await bcrypt.genSalt(10);

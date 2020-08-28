@@ -6,36 +6,40 @@ const { branch } = require('../models/BranchModel');
 const helper = require('../libs/helper');
 
 exports.list = async function(req,res){
-    // try{
+    try{
         let sort_by = req.query.sort_by ? req.query.sort_by : 'created_at';
         let sort_type = req.query.sort_type ? req.query.sort_type : 'desc';
         let page = req.query.page ? parseInt(req.query.page) : 1;
         let limit = req.query.limit ? parseInt(req.query.limit) : 10;
         let keyword = req.query.keyword ? req.query.keyword : '';
         let date = req.query.date ? req.query.date : '';
-        let customer_name = req.query.customer ? req.query.customer : "";
+        let customer_id = req.query.customer_id ? req.query.customer_id : "";
+        let branch_id = req.query.branch_id ? req.query.branch_id : "";
         let query = {};
-        let findCustomer = await customer.findOne({name: customer_name});
         let findFilters = null;
-        if(findCustomer){
-            findFilters = await invoice.find({customer_id: findCustomer._id});
+        let listInvoiceByBranch = null;
+        if(branch_id != ''){
+            listInvoiceByBranch = await invoice.find({branch_id: branch_id});
         };
-        if(date!=''){
-            findFilters = await invoice.find({date: date});
+        if(customer_id != ''){
+            findFilters = await invoice.find({customer_id: customer_id});
         };
-        if(findCustomer && date!=''){
-            findFilters = await invoice.find({date: date, customer_id: findCustomer._id});
+        if(date != ''){
+            findFilters = await invoice.find({date: date}).populate('customer');
+        };
+        if(customer_id != '' && date != ''){
+            findFilters = await invoice.find({date: date, customer_id: customer_id});
         };
         if(keyword != ''){
             /** Tìm 1 key nào đó trong các record có "username" chứa từ khóa "keyword" */
             // query.username = {$regex: '.*'+keyword+'.*'};
 
             /** Tìm 1 key nào đó trong các record có "username", hoặc "name" chứa từ khóa "keyword" */
-            let findCustomer = await customer.findOne({name: keyword});
+            let findCustomer = await customer.findOne({name_search: keyword});
             findCustomer = findCustomer ? findCustomer._id : null;
             query.$or = [
                 {code_bill: {$regex: '.*'+keyword+'.*'}},
-                {customer_id: {$regex: '.*'+findCustomer+'.*'}},
+                {customer_id: findCustomer._id},
             ]
         };
         
@@ -45,7 +49,7 @@ exports.list = async function(req,res){
             sort: sort,
             limit: limit,
             page: page,
-            populate: 'customer'
+            populate: ['seller' , 'customer']
         };
 
         invoice.paginate(query, options).then(function (result) {
@@ -53,20 +57,20 @@ exports.list = async function(req,res){
                 error: false,
                 message: 'Get list success!',
                 data: result,
-                options: options,
-                filters: findFilters ? findFilters : []
+                filters: findFilters ? findFilters : [],
+                listInvoiceByBranch: listInvoiceByBranch ? listInvoiceByBranch : []
             })
         });
-    // }catch(err){
-    //     res.json({
-    //         error: true,
-    //         message: 'Get list invoice failing!'
-    //     })
-    // }
+    }catch(err){
+        res.json({
+            error: true,
+            message: 'Get list invoice failing!'
+        })
+    }
 };
 
 exports.lone = async function(req,res){
-    // try{
+    try{
         let query = req.query;
         let id = req.params.id;
         let seller_id = query.hasOwnProperty('seller_id') ? query.seller_id : '';
@@ -89,18 +93,18 @@ exports.lone = async function(req,res){
                 invoice_detail: findInvoiceDetail,
             })
         }
-    // }catch(err){
-    //     res.json({
-    //         error: true,
-    //         message: "Retrieving invoice by id failed "
-    //     })
-    // }
+    }catch(err){
+        res.json({
+            error: true,
+            message: "Retrieving invoice by id failed "
+        })
+    }
 }
 
 exports.add = async function(req,res){
-    // try{
+    try{
         let body = req.body;
-        let customer_id = body.hasOwnProperty('customer_id') ? body.customer_id : '';
+        let customer_id = body.customer_id ? body.customer_id : '';
         if(customer_id==''){
             let new_record = {
                 name: "Khách lẻ",
@@ -164,12 +168,12 @@ exports.add = async function(req,res){
                 invoice: add_invoice,
             })
         }
-    // }catch(err){
-    //     res.json({
-    //         error: true,
-    //         message: 'Add invoice failing'
-    //     })
-    // }
+    }catch(err){
+        res.json({
+            error: true,
+            message: 'Add invoice failing'
+        })
+    }
 };
 
 exports.update = async function(req,res){

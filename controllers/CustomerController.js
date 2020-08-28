@@ -27,7 +27,7 @@ exports.list = async function(req,res){
             page: page,
         };
 
-        customer.paginate(query).then(function (result) {
+        customer.paginate(query,options).then(function (result) {
             res.json({
                 error: false,
                 message: 'Get list success!',

@@ -29,6 +29,7 @@ exports.list = async function (req, res) {
             sort: sort,
             limit: limit,
             page: page,
+            populate: 'role'
         };
 
         user.paginate(query, options).then(function (result) {
@@ -74,7 +75,7 @@ exports.lone = async function(req,res){
 exports.add = async function (req, res) {
     try {
         /*rồi mình giả sử các biến thằng client gửi lên làn lượt là username,password,name,default_url,email */
-        let role_id = await role.findOne({name: req.body.role_id});
+        let role_id = req.body.role ? req.body.role : '';
         let default_url = await page.findOne({name: req.body.default_url});
         let dupli_user = await user.findOne({username: req.body.username});
         if(dupli_user) return res.status(403).send('Username already exists');
@@ -86,7 +87,7 @@ exports.add = async function (req, res) {
             default_url: default_url ? default_url.url : '',
             forget_token: '',
             token_exprired: '',
-            role_id: role_id._id,
+            role_id: role_id,
             list_branch: req.body.hasOwnProperty('list_branch') ? req.body.list_branch : '',
         };
         const salt = await bcrypt.genSalt(10);
@@ -132,7 +133,7 @@ exports.update = async function (req, res, next) {
         }else{
             hashPassword = old_password.password;
         };
-        let role_id = await role.findOne({name: req.body.role_id});
+        let role_id = req.body.role ? req.body.role : '';
         let new_user = {
             username: req.body.username,
             password: hashPassword,

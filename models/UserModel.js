@@ -24,12 +24,12 @@ const ModelSchema = new Schema({
     toJSON: {virtuals: true}
 });
 
-// ModelSchema.virtual('role', {
-//     ref: 'roles', // Tên bảng muốn liên kết
-//     localField: 'role_id', // Khóa liên kết giữa bảng này và bảng ở trên (roles)
-//     foreignField: '_id', // Khóa liên kết ở bảng này (role_id) sẽ tương ứng với khóa nào bên bảng kia (roles)
-//     justOne: true
-// });
+ModelSchema.virtual('role', {
+    ref: 'roles', // Tên bảng muốn liên kết
+    localField: 'role_id', // Khóa liên kết giữa bảng này và bảng ở trên (roles)
+    foreignField: '_id', // Khóa liên kết ở bảng này (role_id) sẽ tương ứng với khóa nào bên bảng kia (roles)
+    justOne: true
+});
 ModelSchema.pre('save', function(next) {
     this.name_search = helper.toSlug(this.name);
     this.username_search = helper.toSlug(this.username);

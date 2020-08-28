@@ -4,8 +4,29 @@ const app = express();
 const port = process.env.PORT || 3000;
 const mongoose = require("mongoose");
 const server = http.createServer(app);
-const { role } = require('./models/RoleModel');
-const fs = require('fs');
+const io = require('socket.io').listen(server);
+const { branch } = require('./models/BranchModel');
+const { invoice } = require('./models/InvoiceModel');
+
+io.on('connection', async function(socket){
+    let debounce = null;
+    let debounce1 = null;
+    let data = new Date();
+    let date = (data.getMonth() + 1) + "/" + data.getDate() + "/" + data.getFullYear();
+    let findInvoice = await invoice.find({date: date}).populate('branch');
+    clearTimeout(debounce);
+    debounce = setTimeout(function(){
+        socket.emit('list branch', findInvoice);
+    },1000)
+    socket.on('new bill', async function(branch_id, total_price, discount_price){
+        let findBranch = await branch.findOne({_id: branch_id})
+        io.emit('add bill', {branch: findBranch.name, total_price, discount_price});
+    });
+    socket.on('date of sale', async function(data){
+        let findSaleOfDate = await invoice.find({date: data}).populate('branch');
+        socket.emit('list sale of date', findSaleOfDate)
+    })
+});
 
 /** Chỗ này là middleware trước khi đưa vào route mình sẽ parse sẵn dữ liệu json thành các biến để sau này không phải parse nữa 
  * express.json({limit: '50mb'})
@@ -58,6 +79,7 @@ for (key in arr_route_public) {
 
 /** Route bắt buộc phải có token mới cho qua */
 let verifyToken = require('./middlewares/verifyToken');
+const { clear } = require('console');
 var arr_route_private = {
     user: 'users',
     role: 'roles',
@@ -82,9 +104,9 @@ app.use('/reload-permission', async function(req, res){
         var route_file = require('./routes/' + key + '.js');
         const routes = [];
         route_file.stack.forEach(middleware => {
-        if (middleware.route) {
-            routes.push(`${Object.keys(middleware.route.methods)}`);
-        }
+            if (middleware.route) {
+                routes.push(`${Object.keys(middleware.route.methods)}`);
+            }
         });
         for(i in routes){
             arr_permission.push({

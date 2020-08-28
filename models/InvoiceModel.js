@@ -54,6 +54,13 @@ ModelSchema.virtual('customer', {
     justOne: true
 });
 
+ModelSchema.virtual('branch', {
+    ref: 'branches', // The model to use
+    localField: 'branch_id', // Find people where `localField`
+    foreignField: '_id', // is equal to `foreignField`
+    justOne: true
+});
+
 ModelSchema.plugin(mongoosePaginate);
 
 const MainModel = mongoose.model(collection_name, ModelSchema);
