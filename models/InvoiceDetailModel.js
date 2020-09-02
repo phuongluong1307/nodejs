@@ -11,6 +11,7 @@ const ModelSchema = new Schema({
     image: {type: String},
     quantity: {type: Number},
     price: {type:Number},
+    date: {type: String},
     discount_price: {type:Number},
     discount_value: {type:Number},
     discount_type: {type:String},

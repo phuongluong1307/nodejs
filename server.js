@@ -9,23 +9,10 @@ const { branch } = require('./models/BranchModel');
 const { invoice } = require('./models/InvoiceModel');
 
 io.on('connection', async function(socket){
-    let debounce = null;
-    let debounce1 = null;
-    let data = new Date();
-    let date = (data.getMonth() + 1) + "/" + data.getDate() + "/" + data.getFullYear();
-    let findInvoice = await invoice.find({date: date}).populate('branch');
-    clearTimeout(debounce);
-    debounce = setTimeout(function(){
-        socket.emit('list branch', findInvoice);
-    },1000)
-    socket.on('new bill', async function(branch_id, total_price, discount_price){
+    socket.on('new bill', async function(branch_id, total_price){
         let findBranch = await branch.findOne({_id: branch_id})
-        io.emit('add bill', {branch: findBranch.name, total_price, discount_price});
+        io.emit('add bill', {branch: findBranch.name, total_price});
     });
-    socket.on('date of sale', async function(data){
-        let findSaleOfDate = await invoice.find({date: data}).populate('branch');
-        socket.emit('list sale of date', findSaleOfDate)
-    })
 });
 
 /** Chỗ này là middleware trước khi đưa vào route mình sẽ parse sẵn dữ liệu json thành các biến để sau này không phải parse nữa 

@@ -4,6 +4,7 @@ const { user } = require('../models/UserModel');
 const { invoiceDetail } = require('../models/InvoiceDetailModel');
 const { branch } = require('../models/BranchModel');
 const helper = require('../libs/helper');
+const e = require('express');
 
 exports.list = async function(req,res){
     try{
@@ -16,8 +17,111 @@ exports.list = async function(req,res){
         let customer_id = req.query.customer_id ? req.query.customer_id : "";
         let branch_id = req.query.branch_id ? req.query.branch_id : "";
         let query = {};
+        let arrMonth = req.query.arrMonth ? req.query.arrMonth : "";
+        let listBranch = req.query.listBranch ? req.query.listBranch : "";
+        if(arrMonth.length == 2 && (typeof listBranch == 'array' || typeof listBranch == 'object')){
+            let findDateOfMonth = null;
+            let month1 = JSON.parse(arrMonth[0]).month;
+            let year1 = JSON.parse(arrMonth[0]).year;
+            let month2 = JSON.parse(arrMonth[1]).month;
+            let year2 = JSON.parse(arrMonth[1]).year;
+            let firstDate1 = new Date(year1,month1 - 1, 1);
+            let lastDate1 = new Date(year1, month1, 0);
+            let firstDateOfMonth1 = (firstDate1.getMonth() + 1) + '/' + firstDate1.getDate() + '/' + firstDate1.getFullYear();
+            let lastDateOfMonth1 = (lastDate1.getMonth() + 1) + '/' + lastDate1.getDate() + '/' + lastDate1.getFullYear();
+            let firstDate2 = new Date(year2,month2 - 1, 1);
+            let lastDate2 = new Date(year2, month2, 0);
+            let firstDateOfMonth2 = (firstDate2.getMonth() + 1) + '/' + firstDate2.getDate() + '/' + firstDate2.getFullYear();
+            let lastDateOfMonth2 = (lastDate2.getMonth() + 1) + '/' + lastDate2.getDate() + '/' + lastDate2.getFullYear();
+            let firstMonth1 = (new Date(firstDateOfMonth1).getTime());
+            let lastMonth1 = (new Date(lastDateOfMonth1).getTime()); 
+            let firstMonth2 = (new Date(firstDateOfMonth2).getTime());
+            let lastMonth2 = (new Date(lastDateOfMonth2).getTime()); 
+            let promise1 = new Promise(async function(resolve,reject){
+                let findDateOfMonth1 = await invoice.find({
+                    branch_id: {$in: typeof listBranch == "array" || typeof listBranch == 'object' ? listBranch : []},
+                    created_at: {$gte: firstMonth1, $lte: lastMonth1}
+                }).populate('branch');
+                let promise2 = new Promise(async function(resolve,reject){
+                    let findDateOfMonth2 = await invoice.find({
+                        branch_id: {$in: typeof listBranch == "array" || typeof listBranch == 'object' ? listBranch : []},
+                        created_at: {$gte: firstMonth2, $lte: lastMonth2}
+                    }).populate('branch');
+                    setTimeout(function(){
+                        resolve(findDateOfMonth2)
+                    }, 500);    
+                });
+                let result2 = await promise2;
+                let result = findDateOfMonth1.concat(result2);
+                setTimeout(function(){
+                    resolve(result)
+                }, 100)
+            });
+            let result = await promise1;
+            findDateOfMonth = result;
+            if(findDateOfMonth){
+                return res.json({
+                    error: false,
+                    message: 'Get invoice compare success!!!!',
+                    data: findDateOfMonth
+                });
+            };
+        }else if(arrMonth.length == 2 && typeof listBranch == 'string'){
+            let findDateOfMonth = null;
+            let month1 = JSON.parse(arrMonth[0]).month;
+            let year1 = JSON.parse(arrMonth[0]).year;
+            let month2 = JSON.parse(arrMonth[1]).month;
+            let year2 = JSON.parse(arrMonth[1]).year;
+            let firstDate1 = new Date(year1,month1 - 1, 1);
+            let lastDate1 = new Date(year1, month1, 0);
+            let firstDateOfMonth1 = (firstDate1.getMonth() + 1) + '/' + firstDate1.getDate() + '/' + firstDate1.getFullYear();
+            let lastDateOfMonth1 = (lastDate1.getMonth() + 1) + '/' + lastDate1.getDate() + '/' + lastDate1.getFullYear();
+            let firstDate2 = new Date(year2,month2 - 1, 1);
+            let lastDate2 = new Date(year2, month2, 0);
+            let firstDateOfMonth2 = (firstDate2.getMonth() + 1) + '/' + firstDate2.getDate() + '/' + firstDate2.getFullYear();
+            let lastDateOfMonth2 = (lastDate2.getMonth() + 1) + '/' + lastDate2.getDate() + '/' + lastDate2.getFullYear();
+            let firstMonth1 = (new Date(firstDateOfMonth1).getTime());
+            let lastMonth1 = (new Date(lastDateOfMonth1).getTime()); 
+            let firstMonth2 = (new Date(firstDateOfMonth2).getTime());
+            let lastMonth2 = (new Date(lastDateOfMonth2).getTime()); 
+            let promise1 = new Promise(async function(resolve,reject){
+                let findDateOfMonth1 = await invoice.find({
+                    branch_id: listBranch,
+                    created_at: {$gte: firstMonth1, $lte: lastMonth1}
+                }).populate('branch');
+                let promise2 = new Promise(async function(resolve,reject){
+                    let findDateOfMonth2 = await invoice.find({
+                        branch_id: listBranch,
+                        created_at: {$gte: firstMonth2, $lte: lastMonth2}
+                    }).populate('branch');
+                    setTimeout(function(){
+                        resolve(findDateOfMonth2)
+                    }, 500);    
+                });
+                let result2 = await promise2;
+                let result = findDateOfMonth1.concat(result2);
+                setTimeout(function(){
+                    resolve(result)
+                }, 100)
+            });
+            let result = await promise1;
+            findDateOfMonth = result;
+            if(findDateOfMonth){
+                return res.json({
+                    error: false,
+                    message: 'Get invoice compare success!!!!!!',
+                    data: findDateOfMonth
+                });
+            }
+        }
         let findFilters = null;
         let listInvoiceByBranch = null;
+        let day = new Date();
+        let firstDay = new Date(day.getFullYear(), day.getMonth(), 1);
+        let lastDay = new Date(day.getFullYear(), day.getMonth() + 1, 0);
+        let firstDayOfMonth = (firstDay.getMonth() + 1) + '/' + firstDay.getDate() + '/' + firstDay.getFullYear();
+        let lastDayOfMonth = (lastDay.getMonth() + 1) + '/' + lastDay.getDate() + '/' + lastDay.getFullYear();
+        let findDateOfMonth = await invoice.find({date: {$gte: firstDayOfMonth, $lte: lastDayOfMonth}}).populate('seller');
         if(branch_id != ''){
             listInvoiceByBranch = await invoice.find({branch_id: branch_id});
         };
@@ -25,7 +129,7 @@ exports.list = async function(req,res){
             findFilters = await invoice.find({customer_id: customer_id});
         };
         if(date != ''){
-            findFilters = await invoice.find({date: date}).populate('customer');
+            findFilters = await invoice.find({date: date}).populate(['customer', 'seller']);
         };
         if(customer_id != '' && date != ''){
             findFilters = await invoice.find({date: date, customer_id: customer_id});
@@ -58,7 +162,8 @@ exports.list = async function(req,res){
                 message: 'Get list success!',
                 data: result,
                 filters: findFilters ? findFilters : [],
-                listInvoiceByBranch: listInvoiceByBranch ? listInvoiceByBranch : []
+                listInvoiceByBranch: listInvoiceByBranch ? listInvoiceByBranch : [],
+                invoiceOfMonth: findDateOfMonth ? findDateOfMonth : []
             })
         });
     }catch(err){
@@ -139,6 +244,7 @@ exports.add = async function(req,res){
         let arr_product_bill = [];
         body.products.forEach(item => {
             let records_invoiceDetail = {
+                date: add_invoice.date,
                 invoice_id: add_invoice._id,
                 customer_id: add_invoice.customer_id,
                 product_id: item.id,

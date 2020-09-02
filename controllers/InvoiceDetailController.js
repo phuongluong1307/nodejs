@@ -1,14 +1,36 @@
 const { invoiceDetail } = require('../models/InvoiceDetailModel');
 const { customer } = require('../models/CustomerModel');
 const { user } = require('../models/UserModel');
+const { invoice } = require('../models/InvoiceModel');
 
 exports.list = async function(req,res){
     try{
+        let day = new Date();
+        let firstDay = new Date(day.getFullYear(), day.getMonth(), 1);
+        let lastDay = new Date(day.getFullYear(), day.getMonth() + 1, 0);
+        let firstDayOfMonth = (firstDay.getMonth() + 1) + '/' + firstDay.getDate() + '/' + firstDay.getFullYear();
+        let lastDayOfMonth = (lastDay.getMonth() + 1) + '/' + lastDay.getDate() + '/' + lastDay.getFullYear();
+        let findDateOfMonth = await invoiceDetail.find({date: {$gte: firstDayOfMonth, $lte: lastDayOfMonth}})
+        if(findDateOfMonth){
+            let result = [];
+            findDateOfMonth.map(item => {
+                result.push({
+                    product_name: item.product_name,
+                    quantity: item.quantity,
+                    price: item.price
+                });
+            });
+            res.json({
+                error: false,
+                message: 'Get list invoice-detail success!!!!',
+                data: result
+            })
+        }
         
     }catch(err){
         res.json({
             error: true,
-            message: "Get list invoice-detail success"
+            message: "Get list invoice-detail failing!!!!"
         })
     }
 };
