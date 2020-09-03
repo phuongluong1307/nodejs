@@ -47,15 +47,11 @@ exports.list = async function(req,res){
                         branch_id: {$in: typeof listBranch == "array" || typeof listBranch == 'object' ? listBranch : []},
                         created_at: {$gte: firstMonth2, $lte: lastMonth2}
                     }).populate('branch');
-                    setTimeout(function(){
-                        resolve(findDateOfMonth2)
-                    }, 500);    
+                    resolve(findDateOfMonth2)   
                 });
                 let result2 = await promise2;
                 let result = findDateOfMonth1.concat(result2);
-                setTimeout(function(){
-                    resolve(result)
-                }, 100)
+                resolve(result)
             });
             let result = await promise1;
             findDateOfMonth = result;
@@ -94,15 +90,11 @@ exports.list = async function(req,res){
                         branch_id: listBranch,
                         created_at: {$gte: firstMonth2, $lte: lastMonth2}
                     }).populate('branch');
-                    setTimeout(function(){
-                        resolve(findDateOfMonth2)
-                    }, 500);    
+                    resolve(findDateOfMonth2)   
                 });
                 let result2 = await promise2;
                 let result = findDateOfMonth1.concat(result2);
-                setTimeout(function(){
-                    resolve(result)
-                }, 100)
+                resolve(result)
             });
             let result = await promise1;
             findDateOfMonth = result;
