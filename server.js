@@ -36,11 +36,34 @@ app.use(function (req, res, next) {
         /** Chỗ này là mình connect database first_project xem được chưa */
         let DB_URI = "mongodb://127.0.0.1:27017/" + database_name;
         var connectWithRetry = function () {
-            return mongoose.connect(DB_URI, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, socketTimeoutMS: 5000, poolSize: 15 }, function (err, db) {
+            return mongoose.connect(DB_URI, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, socketTimeoutMS: 5000, poolSize: 15 },async function (err, db) {
                 if (err) {
                     console.error('Failed to connect to mongo on startup - retrying in 5 sec', err);
                     setTimeout(connectWithRetry, 2000);
                 } else {
+                    // let arr = [];
+                    // for(let k = 0; k < 100000; k++){
+                    //     let i = Math.floor(Math.random() * 5) + 5;
+                    //     let j = Math.floor(Math.random() * 30) + 1;
+                    //     let total_price = Math.floor(Math.random() * 1000000);
+                    //     let date = i + '/' + j + '/' + 2020;
+                    //     let new_invoice = {
+                    //         date: i + '/' + j + '/' + 2020,
+                    //         total_price: total_price,
+                    //         branch_id: "5f3df95bd2cd38126514a743",
+                    //         created_at: (new Date(date)).getTime(),
+                    //         updated_at: 1599148451267,
+                    //         customer_id:"5f409cf4fe41fffe78f72075",
+                    //         seller_id:"5f2a887fb651671f705128d7",
+                    //         tax_value:0,
+                    //         tax_price:0,
+                    //         discount_price: 0,
+                    //         discount_value: 0,
+                    //         discount_type:"VND",
+                    //         code_bill:"HD3920201"
+                    //     };
+                    //     await invoice.insertMany(new_invoice);
+                    // };
                     console.log("Connect database " + database_name + " success !");
                     next();
                 }
