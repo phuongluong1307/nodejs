@@ -21,40 +21,6 @@ exports.list = async function(req,res){
         let listBranch = req.query.listBranch ? req.query.listBranch : "";
         if(arrMonth.length == 2 && (typeof listBranch == 'array' || typeof listBranch == 'object')){
             let findDateOfMonth = null;
-            // let month1 = JSON.parse(arrMonth[0]).month;
-            // let year1 = JSON.parse(arrMonth[0]).year;
-            // let month2 = JSON.parse(arrMonth[1]).month;
-            // let year2 = JSON.parse(arrMonth[1]).year;
-            // let firstDate1 = new Date(year1,month1 - 1, 1);
-            // let lastDate1 = new Date(year1, month1, 0);
-            // let firstDateOfMonth1 = (firstDate1.getMonth() + 1) + '/' + firstDate1.getDate() + '/' + firstDate1.getFullYear();
-            // let lastDateOfMonth1 = (lastDate1.getMonth() + 1) + '/' + lastDate1.getDate() + '/' + lastDate1.getFullYear();
-            // let firstDate2 = new Date(year2,month2 - 1, 1);
-            // let lastDate2 = new Date(year2, month2, 0);
-            // let firstDateOfMonth2 = (firstDate2.getMonth() + 1) + '/' + firstDate2.getDate() + '/' + firstDate2.getFullYear();
-            // let lastDateOfMonth2 = (lastDate2.getMonth() + 1) + '/' + lastDate2.getDate() + '/' + lastDate2.getFullYear();
-            // let firstMonth1 = (new Date(firstDateOfMonth1).getTime());
-            // let lastMonth1 = (new Date(lastDateOfMonth1).getTime()); 
-            // let firstMonth2 = (new Date(firstDateOfMonth2).getTime());
-            // let lastMonth2 = (new Date(lastDateOfMonth2).getTime()); 
-            // let promise1 = new Promise(async function(resolve,reject){
-            //     let findDateOfMonth1 = await invoice.find({
-            //         branch_id: {$in: typeof listBranch == "array" || typeof listBranch == 'object' ? listBranch : []},
-            //         created_at: {$gte: firstMonth1, $lte: lastMonth1}
-            //     }).populate('branch');
-            //     let promise2 = new Promise(async function(resolve,reject){
-            //         let findDateOfMonth2 = await invoice.find({
-            //             branch_id: {$in: typeof listBranch == "array" || typeof listBranch == 'object' ? listBranch : []},
-            //             created_at: {$gte: firstMonth2, $lte: lastMonth2}
-            //         }).populate('branch');
-            //         resolve(findDateOfMonth2)   
-            //     });
-            //     let result2 = await promise2;
-            //     let result = findDateOfMonth1.concat(result2);
-            //     resolve(result)
-            // });
-            // let result = await promise1;
-            // findDateOfMonth = result;
             // let promise = new Promise(async function(resolve,reject){
                 let result = [];
                 let arr = [];
@@ -109,7 +75,7 @@ exports.list = async function(req,res){
                             }
                         },
                         {$project: {date: 1, total_price: 1, branch: 1}}
-                    ]);
+                    ]).limit(100000);
                     arr = arr.concat(result);
                 });
                 setTimeout(function(){
