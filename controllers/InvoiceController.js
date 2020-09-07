@@ -5,6 +5,7 @@ const { invoiceDetail } = require('../models/InvoiceDetailModel');
 const { branch } = require('../models/BranchModel');
 const helper = require('../libs/helper');
 const e = require('express');
+const base64 = require('../libs/base64');
 
 exports.list = async function(req,res){
     try{
@@ -41,13 +42,13 @@ exports.list = async function(req,res){
                         {$project: {date: 1, total_price: 1, branch: 1}}
                     ]);
                     arr = arr.concat(result);
-                });
-            //     setTimeout(function(){
-            //         resolve(arr);
-            //     },1000)
-            // });
-            // findDateOfMonth = await promise;
-            findDateOfMonth = arr;
+                // });
+                // setTimeout(function(){
+                //     resolve(arr);
+                // },1000)
+            });
+            let result = await promise;
+            findDateOfMonth = result;
             if(findDateOfMonth){
                 return res.json({
                     error: false,
@@ -82,7 +83,8 @@ exports.list = async function(req,res){
                     resolve(arr);
                 },1000)
             });
-            findDateOfMonth = await promise;
+            let result = await promise;
+            findDateOfMonth = result;
             if(findDateOfMonth){
                 return res.json({
                     error: false,
@@ -203,10 +205,12 @@ exports.add = async function(req,res){
         };
         let seller = await user.findOne({name: body.seller});
         let branch_id = body.branch_id ? body.branch_id : '';
+        let image = body.hasOwnProperty('image') ? body.image : '';
         let new_invoice = {
             date: (new Date()).toLocaleDateString(),
             customer_id: customer_id,
             seller_id: seller ? seller._id : '',
+            image: image ? await base64.base64(image) : '',
             tax_type: body.hasOwnProperty('tax_type') ? body.tax_type : '',
             tax_value: body.hasOwnProperty('tax_value') ? body.tax_value : 0,
             tax_price: body.hasOwnProperty('tax_price') ? body.tax_price : 0,

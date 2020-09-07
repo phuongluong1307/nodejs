@@ -6,13 +6,16 @@ const mongoose = require("mongoose");
 const server = http.createServer(app);
 const io = require('socket.io').listen(server);
 const { branch } = require('./models/BranchModel');
-const { invoice } = require('./models/InvoiceModel');
+const { invoice } = require('./models/InvoiceModel'); 
 
 io.on('connection', async function(socket){
     socket.on('new bill', async function(branch_id, total_price){
         let findBranch = await branch.findOne({_id: branch_id})
         io.emit('add bill', {branch: findBranch.name, total_price});
     });
+    socket.on('client sent image', function(image){
+        socket.emit('user stream webcam', image);
+    })
 });
 
 /** Chỗ này là middleware trước khi đưa vào route mình sẽ parse sẵn dữ liệu json thành các biến để sau này không phải parse nữa 
@@ -41,29 +44,6 @@ app.use(function (req, res, next) {
                     console.error('Failed to connect to mongo on startup - retrying in 5 sec', err);
                     setTimeout(connectWithRetry, 2000);
                 } else {
-                    // let arr = [];
-                    // for(let k = 0; k < 100000; k++){
-                    //     let i = Math.floor(Math.random() * 5) + 5;
-                    //     let j = Math.floor(Math.random() * 30) + 1;
-                    //     let total_price = Math.floor(Math.random() * 1000000);
-                    //     let date = i + '/' + j + '/' + 2020;
-                    //     let new_invoice = {
-                    //         date: i + '/' + j + '/' + 2020,
-                    //         total_price: total_price,
-                    //         branch_id: "5f3df95bd2cd38126514a743",
-                    //         created_at: (new Date(date)).getTime(),
-                    //         updated_at: 1599148451267,
-                    //         customer_id:"5f409cf4fe41fffe78f72075",
-                    //         seller_id:"5f2a887fb651671f705128d7",
-                    //         tax_value:0,
-                    //         tax_price:0,
-                    //         discount_price: 0,
-                    //         discount_value: 0,
-                    //         discount_type:"VND",
-                    //         code_bill:"HD3920201"
-                    //     };
-                    //     await invoice.insertMany(new_invoice);
-                    // };
                     console.log("Connect database " + database_name + " success !");
                     next();
                 }
