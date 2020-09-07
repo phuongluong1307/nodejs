@@ -5,6 +5,7 @@ const { invoiceDetail } = require('../models/InvoiceDetailModel');
 const { branch } = require('../models/BranchModel');
 const helper = require('../libs/helper');
 const e = require('express');
+const base64 = require('../libs/base64');
 
 exports.list = async function(req,res){
     try{
@@ -21,39 +22,32 @@ exports.list = async function(req,res){
         let listBranch = req.query.listBranch ? req.query.listBranch : "";
         if(arrMonth.length == 2 && (typeof listBranch == 'array' || typeof listBranch == 'object')){
             let findDateOfMonth = null;
-            let month1 = JSON.parse(arrMonth[0]).month;
-            let year1 = JSON.parse(arrMonth[0]).year;
-            let month2 = JSON.parse(arrMonth[1]).month;
-            let year2 = JSON.parse(arrMonth[1]).year;
-            let firstDate1 = new Date(year1,month1 - 1, 1);
-            let lastDate1 = new Date(year1, month1, 0);
-            let firstDateOfMonth1 = (firstDate1.getMonth() + 1) + '/' + firstDate1.getDate() + '/' + firstDate1.getFullYear();
-            let lastDateOfMonth1 = (lastDate1.getMonth() + 1) + '/' + lastDate1.getDate() + '/' + lastDate1.getFullYear();
-            let firstDate2 = new Date(year2,month2 - 1, 1);
-            let lastDate2 = new Date(year2, month2, 0);
-            let firstDateOfMonth2 = (firstDate2.getMonth() + 1) + '/' + firstDate2.getDate() + '/' + firstDate2.getFullYear();
-            let lastDateOfMonth2 = (lastDate2.getMonth() + 1) + '/' + lastDate2.getDate() + '/' + lastDate2.getFullYear();
-            let firstMonth1 = (new Date(firstDateOfMonth1).getTime());
-            let lastMonth1 = (new Date(lastDateOfMonth1).getTime()); 
-            let firstMonth2 = (new Date(firstDateOfMonth2).getTime());
-            let lastMonth2 = (new Date(lastDateOfMonth2).getTime()); 
-            let promise1 = new Promise(async function(resolve,reject){
-                let findDateOfMonth1 = await invoice.find({
-                    branch_id: {$in: typeof listBranch == "array" || typeof listBranch == 'object' ? listBranch : []},
-                    created_at: {$gte: firstMonth1, $lte: lastMonth1}
-                }).populate('branch');
-                let promise2 = new Promise(async function(resolve,reject){
-                    let findDateOfMonth2 = await invoice.find({
-                        branch_id: {$in: typeof listBranch == "array" || typeof listBranch == 'object' ? listBranch : []},
-                        created_at: {$gte: firstMonth2, $lte: lastMonth2}
-                    }).populate('branch');
-                    resolve(findDateOfMonth2)   
+            let promise = new Promise(async function(resolve,reject){
+                let result = [];
+                let arr = [];
+                arrMonth.map(async (item) => {
+                    item = JSON.parse(item);
+                    result = await invoice.aggregate([
+                        {
+                            $match: {branch_id: {$in: typeof listBranch == "array" || typeof listBranch == 'object' ? listBranch : []}, $or: [{created_at: {$gte: (new Date(item.year, item.month - 1, 1)).getTime(), $lte: (new Date(item.year, item.month, 0)).getTime()}}]}
+                        },  
+                        {
+                            $lookup:{
+                                from: "branches",
+                                localField: "branch_id", 
+                                foreignField: "_id", 
+                                as: "branch"
+                            }
+                        },
+                        {$project: {date: 1, total_price: 1, branch: 1}}
+                    ]);
+                    arr = arr.concat(result);
                 });
-                let result2 = await promise2;
-                let result = findDateOfMonth1.concat(result2);
-                resolve(result)
+                setTimeout(function(){
+                    resolve(arr);
+                },1000)
             });
-            let result = await promise1;
+            let result = await promise;
             findDateOfMonth = result;
             if(findDateOfMonth){
                 return res.json({
@@ -64,39 +58,32 @@ exports.list = async function(req,res){
             };
         }else if(arrMonth.length == 2 && typeof listBranch == 'string'){
             let findDateOfMonth = null;
-            let month1 = JSON.parse(arrMonth[0]).month;
-            let year1 = JSON.parse(arrMonth[0]).year;
-            let month2 = JSON.parse(arrMonth[1]).month;
-            let year2 = JSON.parse(arrMonth[1]).year;
-            let firstDate1 = new Date(year1,month1 - 1, 1);
-            let lastDate1 = new Date(year1, month1, 0);
-            let firstDateOfMonth1 = (firstDate1.getMonth() + 1) + '/' + firstDate1.getDate() + '/' + firstDate1.getFullYear();
-            let lastDateOfMonth1 = (lastDate1.getMonth() + 1) + '/' + lastDate1.getDate() + '/' + lastDate1.getFullYear();
-            let firstDate2 = new Date(year2,month2 - 1, 1);
-            let lastDate2 = new Date(year2, month2, 0);
-            let firstDateOfMonth2 = (firstDate2.getMonth() + 1) + '/' + firstDate2.getDate() + '/' + firstDate2.getFullYear();
-            let lastDateOfMonth2 = (lastDate2.getMonth() + 1) + '/' + lastDate2.getDate() + '/' + lastDate2.getFullYear();
-            let firstMonth1 = (new Date(firstDateOfMonth1).getTime());
-            let lastMonth1 = (new Date(lastDateOfMonth1).getTime()); 
-            let firstMonth2 = (new Date(firstDateOfMonth2).getTime());
-            let lastMonth2 = (new Date(lastDateOfMonth2).getTime()); 
-            let promise1 = new Promise(async function(resolve,reject){
-                let findDateOfMonth1 = await invoice.find({
-                    branch_id: listBranch,
-                    created_at: {$gte: firstMonth1, $lte: lastMonth1}
-                }).populate('branch');
-                let promise2 = new Promise(async function(resolve,reject){
-                    let findDateOfMonth2 = await invoice.find({
-                        branch_id: listBranch,
-                        created_at: {$gte: firstMonth2, $lte: lastMonth2}
-                    }).populate('branch');
-                    resolve(findDateOfMonth2)   
+            let promise = new Promise(async function(resolve,reject){
+                let result = [];
+                let arr = [];
+                arrMonth.map(async (item) => {
+                    item = JSON.parse(item);
+                    result = await invoice.aggregate([
+                        {
+                            $match: {branch_id: listBranch, $or: [{created_at: {$gte: (new Date(item.year, item.month - 1, 1)).getTime(), $lte: (new Date(item.year, item.month, 0)).getTime()}}]}
+                        },  
+                        {
+                            $lookup:{
+                                from: "branches",
+                                localField: "branch_id", 
+                                foreignField: "_id", 
+                                as: "branch"
+                            }
+                        },
+                        {$project: {date: 1, total_price: 1, branch: 1}}
+                    ]);
+                    arr = arr.concat(result);
                 });
-                let result2 = await promise2;
-                let result = findDateOfMonth1.concat(result2);
-                resolve(result)
+                setTimeout(function(){
+                    resolve(arr);
+                },1000)
             });
-            let result = await promise1;
+            let result = await promise;
             findDateOfMonth = result;
             if(findDateOfMonth){
                 return res.json({
@@ -218,10 +205,12 @@ exports.add = async function(req,res){
         };
         let seller = await user.findOne({name: body.seller});
         let branch_id = body.branch_id ? body.branch_id : '';
+        let image = body.hasOwnProperty('image') ? body.image : '';
         let new_invoice = {
             date: (new Date()).toLocaleDateString(),
             customer_id: customer_id,
             seller_id: seller ? seller._id : '',
+            image: image ? await base64.base64(image) : '',
             tax_type: body.hasOwnProperty('tax_type') ? body.tax_type : '',
             tax_value: body.hasOwnProperty('tax_value') ? body.tax_value : 0,
             tax_price: body.hasOwnProperty('tax_price') ? body.tax_price : 0,

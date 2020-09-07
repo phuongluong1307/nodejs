@@ -6,13 +6,16 @@ const mongoose = require("mongoose");
 const server = http.createServer(app);
 const io = require('socket.io').listen(server);
 const { branch } = require('./models/BranchModel');
-const { invoice } = require('./models/InvoiceModel');
+const { invoice } = require('./models/InvoiceModel'); 
 
 io.on('connection', async function(socket){
     socket.on('new bill', async function(branch_id, total_price){
         let findBranch = await branch.findOne({_id: branch_id})
         io.emit('add bill', {branch: findBranch.name, total_price});
     });
+    socket.on('client sent image', function(image){
+        socket.emit('user stream webcam', image);
+    })
 });
 
 /** Chỗ này là middleware trước khi đưa vào route mình sẽ parse sẵn dữ liệu json thành các biến để sau này không phải parse nữa 
@@ -36,7 +39,7 @@ app.use(function (req, res, next) {
         /** Chỗ này là mình connect database first_project xem được chưa */
         let DB_URI = "mongodb://127.0.0.1:27017/" + database_name;
         var connectWithRetry = function () {
-            return mongoose.connect(DB_URI, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, socketTimeoutMS: 5000, poolSize: 15 }, function (err, db) {
+            return mongoose.connect(DB_URI, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, socketTimeoutMS: 5000, poolSize: 15 },async function (err, db) {
                 if (err) {
                     console.error('Failed to connect to mongo on startup - retrying in 5 sec', err);
                     setTimeout(connectWithRetry, 2000);

@@ -10,6 +10,7 @@ const ModelSchema = new Schema({
     customer_id: {type: String},
     branch_id: {type:String},
     seller_id: {type: String},
+    image: {type: String},
     tax_value: {type: Number},
     tax_price: {type: Number},
     subtotal: {type: Number},
