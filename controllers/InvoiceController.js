@@ -90,8 +90,8 @@ exports.list = async function(req,res){
                     error: false,
                     message: 'Get invoice compare success!!!!!!',
                     data: findDateOfMonth
-                });
-            }
+                });    
+            };
         }
         let findFilters = null;
         let listInvoiceByBranch = null;
