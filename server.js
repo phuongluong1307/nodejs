@@ -44,6 +44,10 @@ app.use(function (req, res, next) {
                     console.error('Failed to connect to mongo on startup - retrying in 5 sec', err);
                     setTimeout(connectWithRetry, 2000);
                 } else {
+                    // await invoice.createIndex({"branch_id": 1, "created_at": 1}, { 
+                    //     background: true,
+                    //     name: "idx_invoice_branch_id_and_created_at"
+                    // })
                     console.log("Connect database " + database_name + " success !");
                     next();
                 }

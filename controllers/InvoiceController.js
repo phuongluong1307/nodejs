@@ -20,79 +20,73 @@ exports.list = async function(req,res){
         let query = {};
         let arrMonth = req.query.arrMonth ? req.query.arrMonth : "";
         let listBranch = req.query.listBranch ? req.query.listBranch : "";
-        if(arrMonth.length == 2 && (typeof listBranch == 'array' || typeof listBranch == 'object')){
-            let findDateOfMonth = null;
-            // let promise = new Promise(async function(resolve,reject){
-                let result = [];
-                let arr = [];
-                arrMonth.map(async (item) => {
-                    item = JSON.parse(item);
-                    result = await invoice.aggregate([
-                        {
-                            $match: {branch_id: {$in: typeof listBranch == "array" || typeof listBranch == 'object' ? listBranch : []}, $or: [{created_at: {$gte: (new Date(item.year, item.month - 1, 1)).getTime(), $lte: (new Date(item.year, item.month, 0)).getTime()}}]}
-                        },  
-                        {
-                            $lookup:{
-                                from: "branches",
-                                localField: "branch_id", 
-                                foreignField: "_id", 
-                                as: "branch"
-                            }
-                        },
-                        {$project: {date: 1, total_price: 1, branch: 1}}
-                    ]);
-                    arr = arr.concat(result);
-                // });
-                // setTimeout(function(){
-                //     resolve(arr);
-                // },1000)
-            });
-            let result = await promise;
-            findDateOfMonth = result;
-            if(findDateOfMonth){
-                return res.json({
-                    error: false,
-                    message: 'Get invoice compare success!!!!',
-                    data: findDateOfMonth
+        if(arrMonth.length == 2){
+            if(typeof listBranch == 'array' || typeof listBranch == 'object'){
+                let findDateOfMonth = null;
+                let promise = new Promise(async function(resolve,reject){
+                    let result = [];
+                    let arr = [];
+                    arrMonth.map(async (item) => {
+                        item = JSON.parse(item);
+                        result = await invoice.aggregate([
+                            {
+                                $match: {branch_id: {$in: typeof listBranch == "array" || typeof listBranch == 'object' ? listBranch : []}, $or: [{created_at: {$gte: (new Date(item.year, item.month - 1, 1)).getTime(), $lte: (new Date(item.year, item.month, 0)).getTime()}}]}
+                            },
+                            {$group: {_id: "$branch_id", total: {$sum: "$total_price"}, count: {$sum: 1},month: {$first: "$date"}}},
+                        ]);
+                        arr = arr.concat(result);
+                        if(arr.length == 2){
+                            resolve(arr);
+                        }
+                    });
                 });
-            };
-        }else if(arrMonth.length == 2 && typeof listBranch == 'string'){
-            let findDateOfMonth = null;
-            let promise = new Promise(async function(resolve,reject){
-                let result = [];
-                let arr = [];
-                arrMonth.map(async (item) => {
-                    item = JSON.parse(item);
-                    result = await invoice.aggregate([
-                        {
-                            $match: {branch_id: listBranch, $or: [{created_at: {$gte: (new Date(item.year, item.month - 1, 1)).getTime(), $lte: (new Date(item.year, item.month, 0)).getTime()}}]}
-                        },  
-                        {
-                            $lookup:{
-                                from: "branches",
-                                localField: "branch_id", 
-                                foreignField: "_id", 
-                                as: "branch"
-                            }
-                        },
-                        {$project: {date: 1, total_price: 1, branch: 1}}
-                    ]).limit(100000);
-                    arr = arr.concat(result);
+                let result = await promise;
+                findDateOfMonth = result;
+                if(findDateOfMonth){
+                    return res.json({
+                        error: false,
+                        message: 'Get invoice compare success!!!!',
+                        data: findDateOfMonth
+                    });
+                };
+            }else if(arrMonth.length == 2 && typeof listBranch == 'string'){
+                let findDateOfMonth = null;
+                let promise = new Promise(async function(resolve,reject){
+                    let result = [];
+                    let arr = [];
+                    arrMonth.map(async (item) => {
+                        item = JSON.parse(item);
+                        result = await invoice.aggregate([
+                            // {
+                            //     $match: {branch_id: listBranch, $or: [{created_at: {$gte: (new Date(item.year, item.month - 1, 1)).getTime(), $lte: (new Date(item.year, item.month, 0)).getTime()}}]}
+                            // }, 
+                            {
+                                $lookup: {
+                                    from: 'branches',
+                                    localField: 'branch_id',
+                                    foreignField: '_id',
+                                    as: 'branch'
+                                }
+                            }, 
+                            // {$group: {_id: "$branch_id", total: {$sum: "$total_price"}, count: {$sum: 1}, month: {$first: "$date"}}},
+                        ]).limit(10);
+                        arr = arr.concat(result);
+                        if(arr.length == 2){
+                            resolve(arr);
+                        }
+                    });
                 });
-                setTimeout(function(){
-                    resolve(arr);
-                },1000)
-            });
-            let result = await promise;
-            findDateOfMonth = result;
-            if(findDateOfMonth){
-                return res.json({
-                    error: false,
-                    message: 'Get invoice compare success!!!!!!',
-                    data: findDateOfMonth
-                });    
+                // let result1 = await promise;
+                findDateOfMonth = await promise;
+                if(findDateOfMonth){
+                    return res.json({
+                        error: false,
+                        message: 'Get invoice compare success!!!!!!',
+                        data: findDateOfMonth
+                    });    
+                };
             };
-        }
+        };
         let findFilters = null;
         let listInvoiceByBranch = null;
         let day = new Date();

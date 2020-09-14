@@ -9,6 +9,16 @@ exports.list = async function(req,res){
         let page = req.query.page ? parseInt(req.query.page) : 1;
         let limit = req.query.limit ? parseInt(req.query.limit) : 10;
         let keyword = req.query.keyword ? helper.toSlug(req.query.keyword) : '';
+        let listBranch = req.query.listBranch ? req.query.listBranch : '';
+        if(listBranch){
+            let result = await branch.find({_id: {$in: listBranch}});
+            if(result){
+                res.json({
+                    error: false,
+                    data: result
+                })
+            }
+        }
         let query = {};
         if(keyword!=''){
             /** Tìm 1 key nào đó trong các record có "username" chứa từ khóa "keyword" */
