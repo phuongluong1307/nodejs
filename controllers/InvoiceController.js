@@ -8,7 +8,7 @@ const e = require('express');
 const base64 = require('../libs/base64');
 
 exports.list = async function(req,res){
-    try{
+    // try{
         let sort_by = req.query.sort_by ? req.query.sort_by : 'created_at';
         let sort_type = req.query.sort_type ? req.query.sort_type : 'desc';
         let page = req.query.page ? parseInt(req.query.page) : 1;
@@ -20,6 +20,21 @@ exports.list = async function(req,res){
         let query = {};
         let arrMonth = req.query.arrMonth ? req.query.arrMonth : "";
         let listBranch = req.query.listBranch ? req.query.listBranch : "";
+        let date_by_branch = req.query.date_by_branch ? req.query.date_by_branch : '';
+        if(branch_id != '' && date_by_branch != ''){
+            let listInvoiceByBranch = await invoice.aggregate([
+                {
+                    $match: {branch_id: branch_id, date: date_by_branch}
+                },
+                {$group: {_id: {branch_id: "$branch_id", date: "$date"}, total: {$sum: "$total_price"}}}
+            ]);
+            if(listInvoiceByBranch){
+                return res.json({
+                    error: false,
+                    data: listInvoiceByBranch
+                })
+            }
+        };
         if(arrMonth.length == 2){
             if(typeof listBranch == 'array' || typeof listBranch == 'object'){
                 let findDateOfMonth = null;
@@ -50,54 +65,37 @@ exports.list = async function(req,res){
                     });
                 };
             }else if(arrMonth.length == 2 && typeof listBranch == 'string'){
-                let findDateOfMonth = null;
-                let promise = new Promise(async function(resolve,reject){
-                    let result = [];
-                    let arr = [];
-                    arrMonth.map(async (item) => {
-                        item = JSON.parse(item);
+                    let result = null;
                         result = await invoice.aggregate([
-                            // {
-                            //     $match: {branch_id: listBranch, $or: [{created_at: {$gte: (new Date(item.year, item.month - 1, 1)).getTime(), $lte: (new Date(item.year, item.month, 0)).getTime()}}]}
-                            // }, 
                             {
-                                $lookup: {
-                                    from: 'branches',
-                                    localField: 'branch_id',
-                                    foreignField: '_id',
-                                    as: 'branch'
-                                }
+                                $match: {branch_id: listBranch, month: {$in: typeof arrMonth == "array" || typeof arrMonth == 'object' ? arrMonth : []}}
                             }, 
-                            // {$group: {_id: "$branch_id", total: {$sum: "$total_price"}, count: {$sum: 1}, month: {$first: "$date"}}},
-                        ]).limit(10);
-                        arr = arr.concat(result);
-                        if(arr.length == 2){
-                            resolve(arr);
-                        }
-                    });
-                });
-                // let result1 = await promise;
-                findDateOfMonth = await promise;
-                if(findDateOfMonth){
+                            // {
+                            //     $lookup: {
+                            //         from: 'branches',
+                            //         localField: 'branch_id',
+                            //         foreignField: '_id',
+                            //         as: 'branch'
+                            //     }
+                            // },
+                            {$group: {_id: {branch_id: "$branch_id", month: "$month"}, total: {$sum: "$total_price"}, count: {$sum: 1}}},
+                        ]);
+                if(result){
                     return res.json({
                         error: false,
                         message: 'Get invoice compare success!!!!!!',
-                        data: findDateOfMonth
+                        data: result
                     });    
                 };
             };
         };
         let findFilters = null;
-        let listInvoiceByBranch = null;
         let day = new Date();
         let firstDay = new Date(day.getFullYear(), day.getMonth(), 1);
         let lastDay = new Date(day.getFullYear(), day.getMonth() + 1, 0);
         let firstDayOfMonth = (firstDay.getMonth() + 1) + '/' + firstDay.getDate() + '/' + firstDay.getFullYear();
         let lastDayOfMonth = (lastDay.getMonth() + 1) + '/' + lastDay.getDate() + '/' + lastDay.getFullYear();
         let findDateOfMonth = await invoice.find({date: {$gte: firstDayOfMonth, $lte: lastDayOfMonth}}).populate('seller');
-        if(branch_id != ''){
-            listInvoiceByBranch = await invoice.find({branch_id: branch_id});
-        };
         if(customer_id != ''){
             findFilters = await invoice.find({customer_id: customer_id});
         };
@@ -135,16 +133,15 @@ exports.list = async function(req,res){
                 message: 'Get list success!',
                 data: result,
                 filters: findFilters ? findFilters : [],
-                listInvoiceByBranch: listInvoiceByBranch ? listInvoiceByBranch : [],
                 invoiceOfMonth: findDateOfMonth ? findDateOfMonth : []
             })
         });
-    }catch(err){
-        res.json({
-            error: true,
-            message: 'Get list invoice failing!'
-        })
-    }
+    // }catch(err){
+    //     res.json({
+    //         error: true,
+    //         message: 'Get list invoice failing!'
+    //     })
+    // }
 };
 
 exports.lone = async function(req,res){

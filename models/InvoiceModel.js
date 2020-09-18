@@ -7,6 +7,7 @@ let collection_name = "invoices";
 const ModelSchema = new Schema({
     code_bill: {type: String},
     date: {type: String},
+    month: {type: String},
     customer_id: {type: String},
     branch_id: {type:String},
     seller_id: {type: String},

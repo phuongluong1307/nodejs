@@ -6,7 +6,10 @@ const mongoose = require("mongoose");
 const server = http.createServer(app);
 const io = require('socket.io').listen(server);
 const { branch } = require('./models/BranchModel');
-const { invoice } = require('./models/InvoiceModel'); 
+const { invoice } = require('./models/InvoiceModel');
+const { invoice_of_month } = require('./models/InvoiceOfMonthModel');
+
+global.io = io;
 
 io.on('connection', async function(socket){
     socket.on('new bill', async function(branch_id, total_price){
@@ -15,6 +18,9 @@ io.on('connection', async function(socket){
     });
     socket.on('client sent image', function(image){
         socket.emit('user stream webcam', image);
+    });
+    socket.on('user disconnect', (data) => {
+        socket.broadcast.emit('data user disconnect', data)
     })
 });
 
@@ -39,15 +45,49 @@ app.use(function (req, res, next) {
         /** Chỗ này là mình connect database first_project xem được chưa */
         let DB_URI = "mongodb://127.0.0.1:27017/" + database_name;
         var connectWithRetry = function () {
-            return mongoose.connect(DB_URI, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, socketTimeoutMS: 5000, poolSize: 15 },async function (err, db) {
+            return mongoose.connect(DB_URI, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, socketTimeoutMS: 30000, poolSize: 15 },async function (err, db) {
                 if (err) {
                     console.error('Failed to connect to mongo on startup - retrying in 5 sec', err);
                     setTimeout(connectWithRetry, 2000);
                 } else {
-                    // await invoice.createIndex({"branch_id": 1, "created_at": 1}, { 
-                    //     background: true,
-                    //     name: "idx_invoice_branch_id_and_created_at"
-                    // })
+                    // let status = false;
+                    // if(!status){
+                    //     let listInvoiceByBranch = await invoice.aggregate([
+                    //         {
+                    //             $match: {branch_id: "5f3df95bd2cd38126514a743", month: "5/2020"}
+                    //         },
+                    //         {$group: {_id: {branch_id: "$branch_id", month: "$month"}, total: {$sum: "$total_price"}, count: {$sum: 1}}},
+                    //     ]);
+                    //     if(listInvoiceByBranch){
+                    //         await invoice_of_month.insertMany({
+                    //             branch_id: listInvoiceByBranch[0]._id.branch_id,
+                    //             year: "2020",
+                    //             month: listInvoiceByBranch[0]._id.month,
+                    //             data: {
+                    //                 total_order: listInvoiceByBranch[0].count,
+                    //                 total_price: listInvoiceByBranch[0].total
+                    //             }
+                    //         })
+                    //     };
+                    //     status = true;
+                    // };
+                    // for(let k = 0; k < 2500000; k++){
+                    //     let i = Math.floor(Math.random() * 5) + 5;
+                    //     let j = Math.floor(Math.random() * 30) + 1;
+                    //     let total_price = Math.floor(Math.random() * 1000000);
+                    //     let date = i + '/' + j + '/' + 2020;
+                    //     let new_invoice = {
+                    //         date: i + '/' + j + '/' + 2020,
+                    //         total_price: total_price,
+                    //         month: ((new Date(date)).getMonth() + 1) + "/" + (new Date(date)).getFullYear(),
+                    //         branch_id: "5f3df95bd2cd38126514a743",
+                    //         created_at: (new Date(date)).getTime(),
+                    //         updated_at: 1599148451267,
+                    //         customer_id:"5f409cf4fe41fffe78f72075",
+                    //         seller_id:"5f2a887fb651671f705128d7",
+                    //     };
+                    //     await invoice.insertMany(new_invoice);
+                    // };
                     console.log("Connect database " + database_name + " success !");
                     next();
                 }
@@ -73,7 +113,6 @@ for (key in arr_route_public) {
 
 /** Route bắt buộc phải có token mới cho qua */
 let verifyToken = require('./middlewares/verifyToken');
-const { clear } = require('console');
 var arr_route_private = {
     user: 'users',
     role: 'roles',

@@ -31,6 +31,7 @@ exports.login = async function (req, res) {
                         $in: typeof finduser.list_branch == "array" || typeof finduser.list_branch == "object" ? finduser.list_branch : []
                     }
                 });
+                global.io.emit('new user login', finduser.name);
                 return res.json({
                     error: false,
                     message: 'Login success !',
