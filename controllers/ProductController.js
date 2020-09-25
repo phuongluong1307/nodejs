@@ -2,6 +2,7 @@ const { product } = require('../models/ProductModel');
 const { category } = require('../models/CategoryModel');
 const helper = require('../libs/helper');
 const base64 = require('../libs/base64');
+const cache = require('../redis');
 var path = require('path');
 var fs = require('fs');
 const request = require('request')
@@ -31,11 +32,12 @@ exports.list = async function (req, res) {
         };
         
         product.paginate(query, options).then(function(result){
+            let key = "product";
+            cache.setCache(key, JSON.stringify(result))
             res.json({
                 error: false,
                 message: 'Get list product success!',
                 data: result,
-                query: query
             })
         });
     } catch (err) {

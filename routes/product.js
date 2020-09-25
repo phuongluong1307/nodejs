@@ -1,10 +1,13 @@
 const express = require('express')
 const router = express.Router();
+var cache = require('../redis');
 var controller = require('../controllers/ProductController.js');
 console.log('Route runing base on /api/products/');
 
+let key = "product";
+
 /** Get data */
-router.get('/', function(req, res){
+router.get('/', cache.caching(key), function(req, res){
     return  controller.list(req, res);
 });
 

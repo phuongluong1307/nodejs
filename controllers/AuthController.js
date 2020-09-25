@@ -47,7 +47,7 @@ exports.login = async function (req, res) {
                 const hashPassword = await bcrypt.hash('123123', salt);
                 return res.json({
                     error: true,
-                    message: 'User or Password invalid !',
+                    message: 'Tài khoản hoặc mật khẩu không chính xác!!!',
                     pwd: hashPassword
                 });
             }

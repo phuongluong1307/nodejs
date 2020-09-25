@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
 var controller = require('../controllers/InvoiceController');
+const cache = require('../redis');
 
-router.get('/', function(req,res){
+let key = "listInvoiceByBranch";
+
+router.get('/', cache.caching(key) , function(req,res){
     return controller.list(req,res);
 });
 

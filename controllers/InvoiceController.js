@@ -2,13 +2,11 @@ const { invoice } = require('../models/InvoiceModel');
 const { customer } = require('../models/CustomerModel');
 const { user } = require('../models/UserModel');
 const { invoiceDetail } = require('../models/InvoiceDetailModel');
-const { branch } = require('../models/BranchModel');
-const helper = require('../libs/helper');
-const e = require('express');
 const base64 = require('../libs/base64');
+const cache = require('../redis');
 
 exports.list = async function(req,res){
-    // try{
+    try{
         let sort_by = req.query.sort_by ? req.query.sort_by : 'created_at';
         let sort_type = req.query.sort_type ? req.query.sort_type : 'desc';
         let page = req.query.page ? parseInt(req.query.page) : 1;
@@ -28,6 +26,8 @@ exports.list = async function(req,res){
                 },
                 {$group: {_id: {branch_id: "$branch_id", date: "$date"}, total: {$sum: "$total_price"}}}
             ]);
+            let key = 'listInvoiceByBranch'
+            cache.setCache(key, JSON.stringify(listInvoiceByBranch));
             if(listInvoiceByBranch){
                 return res.json({
                     error: false,
@@ -65,21 +65,21 @@ exports.list = async function(req,res){
                     });
                 };
             }else if(arrMonth.length == 2 && typeof listBranch == 'string'){
-                    let result = null;
-                        result = await invoice.aggregate([
-                            {
-                                $match: {branch_id: listBranch, month: {$in: typeof arrMonth == "array" || typeof arrMonth == 'object' ? arrMonth : []}}
-                            }, 
-                            // {
-                            //     $lookup: {
-                            //         from: 'branches',
-                            //         localField: 'branch_id',
-                            //         foreignField: '_id',
-                            //         as: 'branch'
-                            //     }
-                            // },
-                            {$group: {_id: {branch_id: "$branch_id", month: "$month"}, total: {$sum: "$total_price"}, count: {$sum: 1}}},
-                        ]);
+                let result = null;
+                result = await invoice.aggregate([
+                    {
+                        $match: {branch_id: listBranch, month: {$in: typeof arrMonth == "array" || typeof arrMonth == 'object' ? arrMonth : []}}
+                    }, 
+                    // {
+                    //     $lookup: {
+                    //         from: 'branches',
+                    //         localField: 'branch_id',
+                    //         foreignField: '_id',
+                    //         as: 'branch'
+                    //     }
+                    // },
+                    {$group: {_id: {branch_id: "$branch_id", month: "$month"}, total: {$sum: "$total_price"}, count: {$sum: 1}}},
+                ]);
                 if(result){
                     return res.json({
                         error: false,
@@ -136,12 +136,12 @@ exports.list = async function(req,res){
                 invoiceOfMonth: findDateOfMonth ? findDateOfMonth : []
             })
         });
-    // }catch(err){
-    //     res.json({
-    //         error: true,
-    //         message: 'Get list invoice failing!'
-    //     })
-    // }
+    }catch(err){
+        res.json({
+            error: true,
+            message: 'Get list invoice failing!'
+        })
+    }
 };
 
 exports.lone = async function(req,res){
@@ -177,7 +177,7 @@ exports.lone = async function(req,res){
 }
 
 exports.add = async function(req,res){
-    try{
+    // try{
         let body = req.body;
         let customer_id = body.customer_id ? body.customer_id : '';
         if(customer_id==''){
@@ -196,12 +196,13 @@ exports.add = async function(req,res){
         };
         let seller = await user.findOne({name: body.seller});
         let branch_id = body.branch_id ? body.branch_id : '';
-        let image = body.hasOwnProperty('image') ? body.image : '';
+        let image_seller = body.hasOwnProperty('image') ? body.image : '';
+        // (new Date()).toLocaleDateString()
         let new_invoice = {
-            date: (new Date()).toLocaleDateString(),
+            date: new Date(2021, 11, 5),
             customer_id: customer_id,
             seller_id: seller ? seller._id : '',
-            image: image ? await base64.base64(image) : '',
+            image: image_seller != '' ? await base64.base64(image_seller) : '',
             tax_type: body.hasOwnProperty('tax_type') ? body.tax_type : '',
             tax_value: body.hasOwnProperty('tax_value') ? body.tax_value : 0,
             tax_price: body.hasOwnProperty('tax_price') ? body.tax_price : 0,
@@ -238,6 +239,37 @@ exports.add = async function(req,res){
                 message: 'Add invoice fail!'
             })
         }else{
+            var amqp = require('amqplib/callback_api');
+            var rabbit = 'amqp://localhost';
+            
+            amqp.connect(rabbit, function(error0, connection){
+                if(error0){
+                    throw error0;
+                }
+                connection.createChannel(function(error1, channel){
+                    if(error1){
+                        throw error1;
+                    }
+                    let invoice = {
+                        total_price: add_invoice.total_price,
+                        date: add_invoice.date,
+                        branch_id: add_invoice.branch_id
+                    }
+                    var queue = 'Invoice';
+                    var msg = JSON.stringify(invoice);
+
+                    channel.assertQueue(queue);
+
+                    channel.sendToQueue(queue, Buffer.from(msg));
+
+                    setTimeout(function(){
+                        connection.close();
+                        process.exit();
+                    },500)
+
+                })
+
+            });
             res.json({
                 error: false,
                 message: 'Add invoice success',
@@ -246,12 +278,12 @@ exports.add = async function(req,res){
                 invoice: add_invoice,
             })
         }
-    }catch(err){
-        res.json({
-            error: true,
-            message: 'Add invoice failing'
-        })
-    }
+    // }catch(err){
+    //     res.json({
+    //         error: true,
+    //         message: 'Add invoice failing'
+    //     })
+    // }
 };
 
 exports.update = async function(req,res){

@@ -31,11 +31,13 @@ ModelSchema.pre('save', async function(next) {
     let number = 1;
     let code_bill = "HD" + new_date.getDate() + (new_date.getMonth() + 1) + new_date.getFullYear();
     let bill = await invoice.find({date: (new Date()).toLocaleDateString()});
-    if(bill.length != 0){
+    if(bill.length != 0 && bill[bill.length - 1].code_bill){
         let last_number = bill[bill.length - 1].code_bill.replace(code_bill, "");
         if(last_number){
             number = Number(last_number) + 1;
         }
+    }else{
+
     };
     code_bill = "HD" + new_date.getDate() + (new_date.getMonth() + 1) + new_date.getFullYear() + number;
     this.code_bill = code_bill;
